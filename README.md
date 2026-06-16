@@ -1,6 +1,6 @@
 # claude-skills
 
-Personal [Claude Code](https://claude.com/claude-code) skills — a set of principal-PM gates that run across the lifecycle of any build, from "I have an idea" to "this is going to production." They keep the work honest about *what problem we're solving*, *what "good" measurably means*, *whether the architecture holds*, and *whether it's safe to ship*.
+Personal [Claude Code](https://claude.com/claude-code) skills — a connected set of product gates that run across the lifecycle of any build, from "I have an idea" to "this is going to production." They keep the work honest about *what problem we're solving*, *what "good" measurably means*, *whether the architecture holds*, and *whether it's safe to ship*.
 
 These are installed as global skills under `~/.claude/skills/`. This repo is that directory under version control.
 
