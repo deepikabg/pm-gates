@@ -37,10 +37,25 @@ Each gate bounces cheaply back to the previous one when something isn't clear en
 
 ## Install
 
-Each skill directory drops into `~/.claude/skills/` and is auto-discovered by Claude Code. To use this repo as your live skills directory:
+### As a plugin (recommended — to share)
+
+This repo is a Claude Code plugin marketplace. Anyone can install all seven skills in two commands:
+
+```
+/plugin marketplace add deepikabg/claude-skills
+/plugin install pm-gates@deepika-pm-skills
+```
+
+The plugin is `pm-gates`; the marketplace is `deepika-pm-skills` (defined in [`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json)).
+
+### As a live skills directory (for editing the source)
 
 ```bash
 git clone git@github.com:deepikabg/claude-skills.git ~/.claude/skills
 ```
 
-Or install a single packaged skill via the `.skill` archive.
+Each skill directory is auto-discovered by Claude Code from `~/.claude/skills/`.
+
+### Single skill
+
+Install one packaged skill via its `.skill` archive (e.g. `brainstorm.skill`).

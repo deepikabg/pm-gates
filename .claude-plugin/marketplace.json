@@ -1,0 +1,27 @@
+{
+  "name": "deepika-pm-skills",
+  "owner": {
+    "name": "Deepika Gnanaprakash"
+  },
+  "metadata": {
+    "description": "Principal-PM gate skills for Claude Code — brainstorm through deploy.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "pm-gates",
+      "description": "Seven principal-PM gates that run across a build's lifecycle: brainstorm, eval-spec, architecture-checkpoint, api-contract-definition, eval-integration-gate, security-baseline, and deploy-gate.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./brainstorm",
+        "./eval-spec",
+        "./architecture-checkpoint",
+        "./api-contract-definition",
+        "./eval-integration-gate",
+        "./security-baseline",
+        "./deploy-gate"
+      ]
+    }
+  ]
+}
