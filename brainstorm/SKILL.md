@@ -6,23 +6,23 @@ description: |
 
 # Brainstorm
 
-A gated discovery skill that stops you building the wrong thing. It forces clarity on **goal → prioritized problem → user & journey → decision surface → MVP → phases** before any architecture decision. Grounded in the user's own PM method (see `references/pm-frameworks.md`).
+A gated discovery skill that stops you building the wrong thing. It forces clarity on **goal → prioritized problem → user & journey → decision surface → MVP → phases** before any architecture decision. Grounded in a structured PM method (see `references/pm-frameworks.md`).
 
-## The Single Most Important Rule (the user's own, marked "GOLD")
+## The Single Most Important Rule (marked "GOLD")
 
-**At the problem stage: understand needs, desires, emotions, barriers, goals; map user flow → painpoints → prioritize by goal.** Stay in the problem space — when the user describes a feature or solution, convert it back into the underlying need before going anywhere near how to build it. This is the discipline the whole skill protects.
+**At the problem stage: understand needs, desires, emotions, barriers, goals; map user flow → painpoints → prioritize by goal.** Stay in the problem space — when they describe a feature or solution, convert it back into the underlying need before going anywhere near how to build it. This is the discipline the whole skill protects.
 
 ## Three operating principles
 
 1. **One question at a time.** Never dump a wall of questions. Ask, listen, build on the answer. Talk *through* your reasoning out loud — even when stuck or when an idea seems boring, narrate the questions you're brainstorming. Never answer casually without structure.
-2. **Diverge before you converge.** Brainstorm widely (the user's habit: generate ~10 ideas, invite their input too), then prioritize hard. Wide net first, ruthless triage second.
+2. **Diverge before you converge.** Brainstorm widely — generate ~10 ideas and invite their input too — then prioritize hard. Wide net first, ruthless triage second.
 3. **MVP is a hypothesis test, not a smaller product.** It exists to validate the single riskiest assumption — and to test it as cheaply as possible.
 
 ## When to Trigger
 - Start of any new product/feature/project/side-project
 - "I want to build…", "should I build…", "I have an idea…", "let's brainstorm…"
-- User is about to jump into architecture/code without a defined problem
-- Even when the user sounds confident — confidence about a solution often hides an unexamined problem
+- About to jump into architecture/code without a defined problem
+- Even when they sound confident — confidence about a solution often hides an unexamined problem
 
 ## When NOT to Trigger
 - Problem, user, and MVP are already crisp and documented (go straight to Architecture Checkpoint)
@@ -33,17 +33,17 @@ A gated discovery skill that stops you building the wrong thing. It forces clari
 
 ## The Gated Discovery Flow
 
-Move through gates **in order**. Don't advance until the current gate's check passes. If the user jumps to solutions or architecture, acknowledge it, park it, and pull them back. Open by telling them what's happening: *"Before we build anything, let me run a quick discovery — one question at a time — so we lock the problem and MVP before touching architecture. I'll think out loud as we go."*
+Move through gates **in order**. Don't advance until the current gate's check passes. If they jump to solutions or architecture, acknowledge it, park it, and pull them back. Open by telling them what's happening: *"Before we build anything, let me run a quick discovery — one question at a time — so we lock the problem and MVP before touching architecture. I'll think out loud as we go."*
 
 ---
 
 ### GATE 0 — Clarify & Frame the Question
 
-Ask clarifying questions first; narrow the scope before exploring. (User's habit: "GIVE A HEADS UP" about your assumptions, then narrow to a clear scope and the area of largest impact.)
+Ask clarifying questions first; narrow the scope before exploring. (Give a heads-up about your assumptions, then narrow to a clear scope and the area of largest impact.)
 
 - > "Is this open-ended — 'something in this space' — or a specific bet you've mostly decided and want to pressure-test?"
 - > "Any constraints I should keep in mind up front — team size, timeline, budget, regulatory, tech you're tied to?"
-- For a strategy/0-to-1 framing, surface the **three components that matter most** before anything else. The user's own example: for an apartment-hunting app, the interviewer must hear that the three most important components are **business model, competition, and user segment** before solutions. Name the analogous three for *this* idea.
+- For a strategy/0-to-1 framing, surface the **three components that matter most** before anything else. Example: for an apartment-hunting app, the three that most determine success are **business model, competition, and user segment** — name those before any solution. Name the analogous three for *this* idea.
 
 **Gate check:** You know whether this is explore-wide or pressure-test, the hard constraints, and the 2–3 components that will most determine success.
 
@@ -51,11 +51,11 @@ Ask clarifying questions first; narrow the scope before exploring. (User's habit
 
 ### GATE 1 — Goal & Metrics
 
-Separate the *outcome* from the *thing*. (User's flow: define goal and metrics **before** answering — "if you cannot define success, you can never succeed.")
+Separate the *outcome* from the *thing*. (Define goal and metrics **before** answering — if you can't define success, you can't achieve it.)
 
 1. > "In one sentence: what outcome are you creating? Not the product — the change in someone's world."
 2. > "Why this, why now? What makes it worth your time over everything else?" *(opportunity cost — and second-order: what does doing this *prevent* or *unlock* elsewhere?)*
-3. > "How will you know it worked? Give me the one metric that says 'right bet.'" Then pressure-test it the way the user evaluates metrics: *is this metric better than the alternatives? what's the issue tree of drivers underneath it?*
+3. > "How will you know it worked? Give me the one metric that says 'right bet.'" Then pressure-test it: *is this metric better than the alternatives? what's the issue tree of drivers underneath it?*
 
 **Gate check:** Restatable as `[outcome] for [someone], measured by [one primary metric]`. Park any solution ideas they blurt — save them for MVP triage.
 
@@ -65,7 +65,7 @@ Separate the *outcome* from the *thing*. (User's flow: define goal and metrics *
 
 **This is the core gate. Two moves.**
 
-**Move A — Find and rank the real problem.** (User's method: understand motivation, dislikes, daily routine; *break down 3 things*; frame as problems, never solutions yet.)
+**Move A — Find and rank the real problem.** (Understand motivation, dislikes, daily routine; *break down 3 things*; frame as problems, never solutions yet.)
 1. > "What's the problem? Describe the moment it actually bites — when, where, who's feeling it."
 2. > "If you do nothing, what happens — who's hurt, how badly?" *(painkiller vs. vitamin)*
 3. > "Is this one problem or several? List them — then if you could fix only ONE this month, which unlocks the most, and why is it materially more important than the rest?" *(Customer Problems Stack Rank — it's not enough that you solve a problem; you must know where it ranks.)*
@@ -87,9 +87,9 @@ Doing Move B here — at the cheapest stage, before anything exists — is what 
 
 1. > "Who exactly is this for? Be specific — not 'PMs' but 'newly-promoted PMs at Series B fintechs in their first 90 days.'"
 2. > "What job are they hiring it for? 'When I [situation], I want to [motivation], so I can [outcome].'"
-3. **Walk the journey before the screen.** (User's rule: "think of the journey before going to the place to be designed" — the gym example: wait times, busy times, booking devices in advance.) > "Walk me through their day around this problem — the whole journey, not just the moment they'd touch your product. Where are the painpoints along it?"
+3. **Walk the journey before the screen.** (Map the whole journey before the place to be designed — e.g. for a gym: wait times, busy hours, booking equipment in advance.) > "Walk me through their day around this problem — the whole journey, not just the moment they'd touch your product. Where are the painpoints along it?"
 4. > "Does this serve people already in your world, or require winning a new segment?"
-5. **Second-order:** > "What does the user do *next*, outside the product, after this works? What new problem does that create?"
+5. **Second-order:** > "What do they do *next*, outside the product, after this works? What new problem does that create?"
 
 **Gate check:** Specific segment + JTBD + a journey map with painpoints located along it.
 
@@ -99,7 +99,7 @@ Doing Move B here — at the cheapest stage, before anything exists — is what 
 
 **Move 1 — Riskiest assumption.** > "What must be TRUE for this to work that you're least sure of? If it's false, the whole thing collapses." The MVP exists to test *this*.
 
-**Move 2 — Frequency triage (the user's key insight — apply to EVERY candidate use case).**
+**Move 2 — Frequency triage (apply to EVERY candidate use case).**
 > "How often does this use case actually fire — daily, weekly, monthly, or one-time?"
 Then route by frequency, because frequency determines whether automation is even justified:
 - **Daily / high-frequency** → worth real infrastructure; this is where the product lives.
@@ -108,7 +108,7 @@ Then route by frequency, because frequency determines whether automation is even
 
 This single question kills the "overcomplicating features for no reason" failure mode. High-frequency × high-risk decisions earn real building; everything else gets the lightest mechanism that works.
 
-**Move 3 — Prioritize features.** Pull every idea (incl. parked ones). Score with the user's own tools:
+**Move 3 — Prioritize features.** Pull every idea (incl. parked ones). Score with these tools:
 - **ICE** (Impact × Confidence × Ease) for a fast pass, and/or
 - **MoSCoW** buckets: **Must** (tests the riskiest assumption OR no value without it) / **Should** (Phase 2) / **Could** (Phase 3+) / **Won't** (cut, name why).
 - Sanity-check ambition with **1x/2x/5x/10x**: a good MVP proves one 5x/10x bet with just enough 1x scaffolding to be usable — not all-1x (no reason to switch) nor all-10x (unbuildable).
@@ -123,7 +123,7 @@ This single question kills the "overcomplicating features for no reason" failure
 
 **Phases:** Cut features are *sequenced, not deleted*. For each post-MVP phase: what ships, what it unlocks, and the **signal that triggers it** (gate on learning, not calendar — e.g., "build Phase 2 only after MVP hits >40% weekly return").
 
-**GTM (the user always closes here):** > "Where does your prioritized audience hang out, online and offline?" (their example: moms visit schools, read parenting blogs.) Then sketch the first user stories for the MVP build.
+**GTM (always close here):** > "Where does your prioritized audience hang out, online and offline?" (e.g. moms visit schools, read parenting blogs.) Then sketch the first user stories for the MVP build.
 
 ---
 
@@ -192,4 +192,4 @@ The Brief's **MVP** + **constraints** + **Decision Surface** feed the next gate.
 - ❌ Unmeasurable goal → ✅ one primary metric + its issue tree
 
 ## Reference
-`references/pm-frameworks.md` holds the user's full toolkit: 5C/MECE strategy structure, Customer Problems Stack Rank, ICE, MoSCoW, 1x/2x/5x/10x, the 7 planning themes, Helmer's 7 Powers, DHM, Lean assumption-testing ladder, metrics issue-trees, and the frequency lens. Read it when a gate needs depth.
+`references/pm-frameworks.md` holds the full toolkit: 5C/MECE strategy structure, Customer Problems Stack Rank, ICE, MoSCoW, 1x/2x/5x/10x, the 7 planning themes, Helmer's 7 Powers, DHM, Lean assumption-testing ladder, metrics issue-trees, and the frequency lens. Read it when a gate needs depth.
