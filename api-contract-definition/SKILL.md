@@ -57,7 +57,11 @@ paths:
   /v1/[resource]:
     post:
       summary: Create [resource]
-      parameters: [...]
+      parameters:
+        - in: header
+          name: Idempotency-Key       # safe-to-retry: dedupe duplicate creates (critical for payments)
+          required: true
+          schema: { type: string }
       requestBody:
         content:
           application/json:
@@ -82,6 +86,25 @@ paths:
           description: Rate limited
           headers:
             X-RateLimit-Remaining: { schema: { type: integer } }
+    get:
+      summary: List [resource] (paginated)
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, default: 25, maximum: 100 }   # cap page size
+        - in: query
+          name: cursor
+          schema: { type: string }        # opaque cursor — prefer over offset for stable paging
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:        { type: array, items: {} }
+                  next_cursor: { type: string, nullable: true }   # null = last page
 
 components:
   schemas:
@@ -102,6 +125,16 @@ security:
   - apiKey: []
 ```
 
+### Step 2b: Patterns to Lock (pick the ones that apply)
+The template above is sync CRUD. Most real APIs need one or more of these — decide them now, not after a consumer integrates:
+- **Idempotency** (any create / payment / state-changing POST): require an `Idempotency-Key` header; the server dedupes retries so a network retry never double-charges or double-writes.
+- **Pagination** (any list endpoint): cursor-based by default (stable under inserts), with a capped `limit`. Offset pagination only for small, static sets.
+- **Async / long-running jobs:** return `202 Accepted` + a job id; consumer polls `GET /jobs/{id}` or receives a webhook on completion. Don't hold a request open.
+- **Webhooks** (events to consumers): **HMAC signature** so the receiver can verify authenticity, documented retry policy with backoff, and at-least-once delivery → tell consumers to **dedupe by event id** (their idempotency).
+- **Streaming** (AI token output, live feeds): Server-Sent Events (SSE) for one-way server→client; document the event format and how the stream terminates/errors.
+- **Rate limits & quotas:** document the actual limits and the `429` + `Retry-After` / `X-RateLimit-*` contract — including cost-based limits on expensive (e.g. LLM-backed) endpoints.
+- **AuthZ in the contract:** if using scopes/permissions, state which scope each endpoint requires (not just "needs a key").
+
 ### Step 3: Validate Against Use Cases
 Walk 5–10 concrete scenarios — happy path, every error in the taxonomy, and pagination:
 ```
@@ -120,7 +153,10 @@ Scenario 3 — Rate limited
 
 ### Step 4: PM Approval
 - [ ] Errors are well-defined (error_code + message + request_id)
-- [ ] Pagination strategy is clear (if applicable)
+- [ ] Pagination strategy is clear and capped (list endpoints)
+- [ ] Idempotency defined for state-changing POSTs (esp. payments)
+- [ ] Async/webhook/streaming patterns specified where the use cases need them
+- [ ] Webhooks are signed + dedupe-able; rate limits documented
 - [ ] Versioning path is explicit
 - [ ] Backwards-compatibility promise is documented
 
@@ -133,6 +169,9 @@ Once the contract is approved, always run **security-baseline** next — before 
 - ❌ Designing the contract after the code exists → ✅ contract first, code to the contract
 - ❌ Unversioned endpoints → ✅ explicit version path + deprecation policy from day one
 - ❌ Free-text error strings → ✅ machine-readable `error_code` + human `message` + `request_id`
-- ❌ Pagination "we'll add when it's slow" → ✅ decided up front for any list endpoint
+- ❌ Pagination "we'll add when it's slow" → ✅ cursor-based, capped, decided up front for any list endpoint
+- ❌ Non-idempotent create/payment endpoints → ✅ `Idempotency-Key` so retries never double-charge
+- ❌ Unsigned webhooks / "consumer can just trust it" → ✅ HMAC-signed, dedupe-by-event-id, documented retries
+- ❌ Holding a request open for a long job → ✅ `202` + job id + poll/webhook
 - ❌ Validating only the happy path → ✅ a scenario for every error in the taxonomy
 - ❌ Silent breaking changes → ✅ a documented backwards-compatibility promise consumers can rely on
