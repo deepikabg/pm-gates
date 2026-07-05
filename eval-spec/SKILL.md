@@ -103,6 +103,10 @@ Linked MVP: [from Brainstorm Brief]   AI-native: [y/n]
 | Category (root-cause) | Mechanism | Freq×Impact | Bucket | Eval that catches it |
 |---|---|---|---|---|
 
+## Critical User Journeys (qa-verify's post-deploy script)
+| # | Journey (end-to-end user path) | Steps | Binary pass criterion | Priority |
+|---|---|---|---|---|
+
 ## Gold-Standard Dataset (probabilistic features)
 - Size & coverage: [typical / edge / adversarial]
 - Source: [real traces / structured synthetic — dimensions used]
