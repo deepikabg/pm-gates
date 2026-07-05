@@ -106,12 +106,12 @@ Artifact: [commit/branch]   Target: [platform / env]
 [ ⛔ Production deploy / migration — HELD for explicit human approval ]
 ```
 
-## Handoff (End of Chain)
+## Handoff (→ qa-verify)
 
-- **Staging/preview:** clear to proceed autonomously; report the URL.
-- **Production / migration:** only after explicit human approval given in this gate. After a successful prod deploy, confirm rollback path is known and monitoring/logging is live.
+- **Staging/preview:** clear to proceed autonomously; report the URL and trigger `qa-verify` for the full verification pass.
+- **Production / migration:** only after explicit human approval given in this gate. After a successful prod deploy, confirm rollback path is known, then trigger `qa-verify` for prod verification and the post-deploy monitoring window.
 
-This is the terminal gate. Once production is approved and shipped, the chain is complete; ongoing issues feed back through the eval/feedback loop, not through re-running this gate.
+This gate's job ends when the deploy command succeeds. Verification of the *running product* belongs to `qa-verify` — the chain is complete only when its prod monitoring window closes clean. Ongoing findings feed back through the eval/feedback loop, not through re-running this gate.
 
 ## Anti-Patterns
 - ❌ Trusting the design-time security check to cover the shipped code → ✅ re-scan the actual artifact
