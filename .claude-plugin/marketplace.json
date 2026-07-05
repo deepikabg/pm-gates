@@ -1,25 +1,23 @@
 {
-  "name": "deepika-pm-skills",
-  "owner": {
-    "name": "deepikabg"
-  },
-  "metadata": {
-    "description": "PM gate skills for Claude Code — brainstorm through deploy.",
-    "version": "1.0.0"
-  },
+  "name": "deepikabg",
+  "owner": { "name": "Deepika G Prakash", "url": "https://github.com/deepikabg" },
   "plugins": [
     {
       "name": "pm-gates",
-      "description": "Six gates that run across a build's lifecycle: brainstorm, eval-spec, architecture-checkpoint, api-contract-definition, security-baseline, and deploy-gate.",
-      "source": "./",
+      "source": { "source": "path", "path": "./" },
+      "description": "PM governance layer for autonomous build loops: gated pipeline from brainstorm through browser-verified deploy, with scale-adaptive routing and human hard stops at irreversible actions.",
+      "version": "1.0.0",
+      "license": "MIT",
       "strict": false,
       "skills": [
+        "./loop-orchestrator",
         "./brainstorm",
         "./eval-spec",
         "./architecture-checkpoint",
         "./api-contract-definition",
         "./security-baseline",
-        "./deploy-gate"
+        "./deploy-gate",
+        "./qa-verify"
       ]
     }
   ]
