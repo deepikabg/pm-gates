@@ -4,7 +4,7 @@
 
 The popular approaches to autonomous building all constrain the *engineer* side — code discipline, context hygiene, role separation. None of them answer the product questions: *Is this the right thing to build? How will we know it works? What must never happen without a human?*
 
-pm-gates is that layer: nine connected gates that run across the lifecycle of any build, from "I have an idea" to "this is verified in production." They keep the work honest about what problem we're solving, what "good" measurably means, whether the architecture holds, and whether it's safe to ship.
+pm-gates is that layer: eight connected gates that run across the lifecycle of any build, from "I have an idea" to "this is verified in production." They keep the work honest about what problem we're solving, what "good" measurably means, whether the architecture holds, and whether it's safe to ship.
 
 ```
 DEFINE     brainstorm → eval-spec → architecture-checkpoint
@@ -15,7 +15,7 @@ SHIP       deploy-gate  (staging autonomous · prod = HARD STOP for a human)
 VERIFY     qa-verify    (real browser · bounded fix loop · post-deploy watch)
 ```
 
-`loop-orchestrator` is the single source of truth for sequence, routing, state, and resumption. `eval-spec` carries the AI-native eval loop end to end: the spec it produces is simultaneously the build engine's definition-of-done and `qa-verify`'s browser script. Each gate bounces cheaply back to the previous one when something isn't clear enough — if you can't write the eval, the problem isn't understood well enough to build.
+`loop-orchestrator` is the single source of truth for sequence, routing, state, and resumption — gates signal completion and never route themselves. It also owns **spec-intake**: arrive with an existing PRD and the loop imports the gates it satisfies, gap-interviews only what's missing, and never re-runs the full discovery ceremony (eval-spec is the one gate that can't be skipped by omission). `eval-spec` carries the AI-native eval loop end to end: the spec it produces is simultaneously the build engine's definition-of-done and `qa-verify`'s browser script. Each gate bounces cheaply back to the previous one when something isn't clear enough — if you can't write the eval, the problem isn't understood well enough to build.
 
 ## The skills
 
