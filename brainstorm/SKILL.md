@@ -1,7 +1,7 @@
 ---
 name: brainstorm
 description: |
-  Stop the user from jumping to solutions and force clarity on goal, prioritized problem, decision surface, and MVP scope BEFORE any building begins. Use at the very start of ANY new product, feature, project, side-project, or "I want to build X" conversation — even if the user already sounds confident. Triggers on "I want to build", "help me think through", "let's brainstorm", "new idea", "should I build", "I'm thinking about a product/feature/app/tool", or whenever the user is about to start building without a defined problem and MVP. Runs a gated discovery interview (one question at a time), frames solutions as problems, decomposes the decision surface for AI-native systems, triages by frequency and impact into a true MVP vs. later phases, and produces a Brainstorm Brief that feeds into Architecture Checkpoint. Always use before architecture or coding when the problem and MVP are not yet crisp.
+  Stop the user from jumping to solutions and force clarity on goal, prioritized problem, decision surface, and MVP scope BEFORE any building begins. Use at the very start of ANY new product, feature, project, side-project, or "I want to build X" conversation — even if the user already sounds confident. Triggers on "I want to build", "help me think through", "let's brainstorm", "new idea", "should I build", "I'm thinking about a product/feature/app/tool", or whenever the user is about to start building without a defined problem and MVP. Runs a gated discovery interview (one question at a time), frames solutions as problems, decomposes the decision surface for AI-native systems, triages by frequency and impact into a true MVP vs. later phases, and produces a Brainstorm Brief. On completion it signals loop-orchestrator, which routes next (eval-spec for AI-native/high-stakes builds, architecture-checkpoint otherwise). If the user arrives with an existing spec/PRD, do NOT run the full interview — loop-orchestrator's spec-intake imports it and this skill interviews only on the gaps it surfaces. Always use before architecture or coding when the problem and MVP are not yet crisp.
 ---
 
 # Brainstorm
@@ -24,8 +24,8 @@ A gated discovery skill that stops you building the wrong thing. It forces clari
 - About to jump into architecture/code without a defined problem
 - Even when they sound confident — confidence about a solution often hides an unexamined problem
 
-## When NOT to Trigger
-- Problem, user, and MVP are already crisp and documented (go straight to Architecture Checkpoint)
+## When NOT to Trigger (full interview)
+- The user arrived with an existing spec/PRD/brief → **loop-orchestrator's spec-intake** owns this case. It maps the document against the Brainstorm Brief schema and marks this gate `imported`; this skill then runs in **gap-interview mode only** — ask solely about the gaps intake surfaced, one at a time, never the full ceremony. Note: a crisp problem doc does NOT skip eval-spec; intake can never import eval-spec by omission.
 - A narrow implementation question mid-build
 - Pure research/learning with no build attached
 
@@ -180,7 +180,7 @@ Where the audience is (on/offline): [...]   First user stories: [...]
 ```
 
 ## Handoff
-The Brief's **MVP** + **constraints** + **Decision Surface** feed the next gate. For AI-native or high-stakes builds, run **eval-spec** next (define what "working" measurably means) BEFORE architecture — if you can't write the eval, the problem isn't clear enough to build, which bounces cheaply back here. For simple deterministic/throwaway builds, skip straight to **architecture-checkpoint**. Say: *"Brief is locked. Since this is AI-native, I'll define the eval spec next — what 'good' measurably means per feature — before we design architecture. (For a simple build I'd skip straight to Architecture.)"*
+The Brief's **MVP** + **constraints** + **Decision Surface** feed the next gate. Write the Brief's path + a `passed` entry to `.pipeline/state.yaml`, then **signal loop-orchestrator — it owns routing; this skill never chooses the next gate.** (Per the orchestrator's rules, eval-spec runs next at Levels 2–3 — if you can't write the eval, the problem isn't clear enough to build, which bounces cheaply back here.) Say: *"Brief is locked and logged to state — handing to the orchestrator for the next gate."*
 
 ## Anti-Patterns
 - ❌ Dumping all questions at once → ✅ one at a time, think out loud
