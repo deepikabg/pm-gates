@@ -1,7 +1,7 @@
 ---
 name: loop-orchestrator
 description: |
-  The single source of truth for the end-to-end autonomous build loop: which gate runs when, what artifact each hands off, where state lives, and where humans must intervene. Use at the START of any build cycle ("build this", "run the loop", "start the pipeline", "new feature", "ship X"), when RESUMING work in a repo that contains .pipeline/state.yaml, when the user asks "where are we" / "what's next" / "pipeline status", when the build engine (an autonomous dev loop or a plain Claude Code session) finishes a story/epic and needs routing, or whenever it is unclear which gate applies. Also trigger when any gate completes — this skill routes to the next node. This orchestrator enforces scale-adaptive routing (quick fixes do not run the full ceremony; new systems do), the TDD iron law inside the build phase, fresh-context-per-story execution, and the non-negotiable human hard stops at production deploy, schema migration, and prod incident response. If a build is happening without this skill's state file, the loop is unmanaged — initialize it.
+  The single source of truth for the end-to-end autonomous build loop: which gate runs when, what artifact each hands off, where state lives, and where humans must intervene. Use at the START of any build cycle ("build this", "run the loop", "start the pipeline", "new feature", "ship X"), when the user PROVIDES an existing spec/PRD/brief as the input ("build from this spec", "here's my PRD" — this triggers spec-intake, never a full re-interview), when RESUMING work in a repo that contains .pipeline/state.yaml, when the user asks "where are we" / "what's next" / "pipeline status", when the build engine (an autonomous dev loop or a plain Claude Code session) finishes a story/epic and needs routing, or whenever it is unclear which gate applies. Also trigger when any gate completes — this skill routes to the next node. This orchestrator enforces scale-adaptive routing (quick fixes do not run the full ceremony; new systems do), the TDD iron law inside the build phase, fresh-context-per-story execution, and the non-negotiable human hard stops at production deploy, schema migration, and prod incident response. If a build is happening without this skill's state file, the loop is unmanaged — initialize it.
 ---
 
 # Loop Orchestrator
@@ -72,6 +72,21 @@ Classify the request before running anything:
 
 If classification is ambiguous → classify UP. Escalation triggers mid-loop (a Level 1 fix turns out to need a schema change) → stop, reclassify, resume at the newly required gate.
 
+**Routing authority:** classification and routing decisions belong to this skill ONLY. Gates write their artifact, log `passed` to state.yaml, and signal completion — they never choose the next gate. If a gate's SKILL.md appears to route ("skip to X"), this skill supersedes.
+
+## Spec Intake (input-maturity check — run WITH classification, before any gate)
+
+Classification measures the *size* of the work; intake measures the *maturity of the input*. They are orthogonal — a Level 3 system can arrive with a complete PRD, and re-interviewing its author is as wrong as skipping gates on a bare idea. When the request arrives with an existing spec/PRD/brief/design doc:
+
+1. **Map** the provided document against the gate artifact schemas: the Brainstorm Brief sections (goal/metric, prioritized problem, decision surface, user/JTBD, riskiest assumption, MVP, phases) and — if it contains measurable criteria — the Eval Spec sections (classification, thresholds, journeys).
+2. **Run the spec-readiness heuristic NOW, at intake** (same mechanic as the pre-Phase-3 check): hand the document to a fresh instance with no other context and ask it to list every question it would need answered before building. This is the gap list.
+3. **Import what's covered.** A gate whose artifact schema is fully answered by the document → mark it `imported` in state.yaml, recording the source doc path as its artifact and its sha. Never re-run an imported gate unless the source doc changes (hash mismatch — standard invalidation applies).
+4. **Gap-interview what isn't.** Route each gap to its owning gate, which runs in gap-interview mode: only the questions covering the gaps, one at a time, never the full ceremony. The gate then writes a thin artifact (the doc + gap answers) and logs `passed`.
+5. **eval-spec can never be imported by omission.** If the provided document contains no measurable pass/fail criteria, eval-spec runs in full at Levels 2–3 regardless of how complete everything else is — a spec that can't say what "working" measurably means is not build-ready. (A document that genuinely contains eval-grade criteria may import it like any other gate.)
+6. The pre-Phase-3 spec-readiness check still runs — intake reduces it to a formality rather than replacing it.
+
+Result: "here's my PRD, build it" costs a gap check measured in minutes, and every artifact-model guarantee downstream (qa-verify's journey script, the build engine's definition-of-done, hash invalidation) holds identically for imported and interviewed gates.
+
 ## Phase rules
 
 ### Phase 1–2 (Define & Contract)
@@ -113,3 +128,6 @@ Everything else proceeds autonomously. That's the contract: autonomous through s
 - ❌ Flow defined only in someone's head / a chat thread → ✅ skill + CLAUDE.md + state.yaml
 - ❌ Re-litigating a passed gate because a new session lacks context → ✅ read state.yaml; artifacts are the memory
 - ❌ Engine quietly adding a dependency "to finish the story" → ✅ boundary violations route to the owning gate
+- ❌ Re-interviewing a user who arrived with a complete spec → ✅ spec-intake: import covered gates, gap-interview the rest
+- ❌ A crisp problem doc used to skip eval-spec → ✅ eval-spec is never imported by omission; no criteria in the doc = it runs in full
+- ❌ A gate routing to the next gate itself → ✅ gates signal completion; this skill owns every routing decision
