@@ -16,7 +16,10 @@ gates:
   api-contract-definition: { status: pending, artifact: "", artifact_sha: "", passed_at: "" }
   security-baseline:     { status: pending, artifact: "", artifact_sha: "", passed_at: "" }
   deploy-gate:           { status: pending, report: "", staging_url: "", prod_approved_by: "", approved_at: "" }
-  qa-verify:             { status: pending, report: "", verdict: "", monitoring_window_end: "" }
+  qa-verify:                      # runs in three modes; orchestrator routes between them
+    pre_handoff: { status: pending, target: "localhost", report: "", verdict: "", day0_checklist: "" }  # first-run gate — runs BEFORE deploy-gate, no deploy
+    staging:     { status: pending, report: "", verdict: "" }
+    prod:        { status: pending, report: "", verdict: "", monitoring_window_end: "" }
   # status: pending | in-progress | passed | failed | skipped(level-N) | imported
   # imported = gate satisfied by a user-provided spec via loop-orchestrator's spec-intake:
   #   artifact = source doc path, artifact_sha = its hash (standard invalidation applies).
@@ -35,8 +38,28 @@ build:
   #   eval_criteria: []        # Eval-Spec criteria this story satisfies
   #   failing_test_written: false   # TDD iron law — must be true before code
   #   status: pending           # pending | in-progress | done | parked
+  #   done requires: tests run + named evals run THIS session, both recorded in test_runs below
   #   budget: { max_iterations: 5, used: 0 }
   #   worker_context: fresh     # fresh context per story — never full PRD
+
+test_runs: []               # append-only evidence ledger — NEVER overwrite prior entries.
+  # JSON reports live in .pipeline/results/ (COMMITTED, not gitignored — this is the audit trail).
+  # - at: ""                    # ISO timestamp
+  #   scope: ""                 # story | phase | full   (phase requires a tests/loop-phase{N} run)
+  #   command: ""               # exact command run, e.g. "npm test -- loop-phase3"
+  #   passed: 0
+  #   failed: 0
+  #   eval_scores: {}           # { criterion-id: score }
+  #   guardrail_violations: 0
+  #   ship_gate: ""             # "" | BINDABLE | NOT BINDABLE  (provisional gold set = NOT BINDABLE)
+  #   report_path: ".pipeline/results/<ts>.json"
+  #   checkpoint_commit: ""     # sha of the green checkpoint commit, if this run was green
+
+git:                        # checkpoint-after-green policy (Phase 3 rule 8)
+  remote: ""                # configured remote URL, or "" if none
+  checkpoint_branch: ""     # feature/dev branch checkpoints push to — NEVER main/prod
+  push_checkpoints: null    # true | false — asked ONCE when no remote exists, then never re-asked
+  create_remote_declined: false
 
 approvals: []
   # - { action: "prod deploy", target: "", approved_by: "", at: "", rollback_plan: "" }
