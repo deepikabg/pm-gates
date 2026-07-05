@@ -17,7 +17,16 @@ gates:
   security-baseline:     { status: pending, artifact: "", artifact_sha: "", passed_at: "" }
   deploy-gate:           { status: pending, report: "", staging_url: "", prod_approved_by: "", approved_at: "" }
   qa-verify:             { status: pending, report: "", verdict: "", monitoring_window_end: "" }
-  # status: pending | in-progress | passed | failed | skipped(level-N)
+  # status: pending | in-progress | passed | failed | skipped(level-N) | imported
+  # imported = gate satisfied by a user-provided spec via loop-orchestrator's spec-intake:
+  #   artifact = source doc path, artifact_sha = its hash (standard invalidation applies).
+  #   eval-spec may only be imported if the doc contains measurable pass/fail criteria.
+
+intake:                    # populated only when the build started from a provided spec
+  source_doc: ""           # path to the user-provided spec/PRD
+  source_sha: ""
+  gap_list: []             # questions surfaced by the intake spec-readiness check
+  gaps_resolved: false
 
 build:
   stories: []
