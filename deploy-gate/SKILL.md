@@ -30,6 +30,8 @@ This gate is the difference between "autonomous through staging, human-gated to 
 
 A global "don't ask permissions" setting does NOT override these stops. If Claude Code is in bypass mode, this gate re-introduces a confirmation specifically for the actions above.
 
+> **Note — checkpoint commits vs. deploy pushes.** During the build phase the engine commits and pushes a **green-run checkpoint** to the *feature/dev branch* after every green test/eval run (loop-orchestrator Phase 3 rule 8) — that is reversible and autonomous. Promoting any branch to `main`/the prod branch, or a push that triggers a production deploy, is **this gate's** territory and follows the hard-stop rules above. Checkpoint ≠ deploy: the engine never pushes to `main` on its own.
+
 ## When to Trigger
 
 Fire this the moment any of these is imminent:
