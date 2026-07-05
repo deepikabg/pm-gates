@@ -19,7 +19,9 @@ One backbone, one artifact model. This skill defines the holistic end-to-end loo
 | Epics/stories decomposed AFTER architecture is approved | Phase 2 → 3 boundary |
 | Fresh context per story; shard documents, don't stuff context | Build-phase rules |
 | Test-first iron law: no production code without a failing test | Build-phase rules |
-| Real-browser verification + bounded fix loop + post-deploy watch | `qa-verify` gate |
+| Real-browser verification, first on localhost before any deploy | `qa-verify` pre-handoff mode |
+| A phase closes only on stored test + eval evidence | Phase 3 rules 4–7 · `test_runs` ledger |
+| Every green run is a recoverable git checkpoint | Phase 3 rule 8 |
 | Irreversible actions always stop for a human | `deploy-gate` hard stops |
 
 ## The Canonical Loop
@@ -36,15 +38,19 @@ One backbone, one artifact model. This skill defines the holistic end-to-end loo
                     ▼                                               ▼
         [BUILD ENGINE: your autonomous dev loop / Claude Code]
           stories decomposed from approved architecture
-          rules: TDD iron law · fresh context per story · eval-spec = done
+          rules: TDD iron law · fresh context per story · done = tests+evals run & stored · green run = checkpoint
                                                                     │
                     ┌────────── PHASE 4: SHIP & VERIFY ─────────────┤
                     ▼                                               ▼
-        deploy-gate (staging auto → prod HARD STOP) ──► qa-verify
+        qa-verify (PRE-HANDOFF · localhost, no deploy)  ← first-run gate
+          journeys + day-0 checklist · day-0 fix loop (localhost)
+                    │ green
+                    ▼
+        deploy-gate (staging auto → prod HARD STOP) ──► qa-verify (staging)
                     ▲                                        │
                     └───── fix loop (staging only) ◄─────────┘
                                                              │
-        verified prod + clean monitoring window ──► DONE ──► findings → new loop
+        prod approval ──► qa-verify (prod + monitoring) ──► DONE ──► findings → new loop
 ```
 
 ## Where the flow is defined (answering "where does this live")
@@ -100,13 +106,19 @@ The orchestrator is engine-agnostic — any autonomous dev loop or plain Claude 
 1. **Stories come from the approved architecture**, never invented ad hoc. Each story names the Eval-Spec criteria it satisfies.
 2. **TDD iron law:** a story begins by writing the failing test(s) that encode its acceptance criteria. Production code exists only to make them pass. No test → the story is not startable.
 3. **Fresh context per story.** Workers load: the story, the relevant Architecture/contract shards, and nothing else. Never the full PRD.
-4. **Story done =** tests pass + named Eval-Spec criteria pass + no contract drift. Engine writes completion to state.yaml.
-5. **Boundary violations route up, not around:** a story that needs a new dependency, endpoint, or PII touch stops and routes to the owning gate (security-baseline / api-contract-definition / eval-spec). The engine may not self-approve scope.
-6. **Budgets:** max token/iteration budget per story set in state.yaml; exhausted → park the story, report, continue others.
+4. **Story done = evidence, not existence.** A story is `done` only when its tests **and** its named Eval-Spec criteria have been **run in this session** and the results are **recorded** — never merely "tests exist." The engine appends a `test_runs` entry to state.yaml and writes the runner's JSON report to `.pipeline/results/<ts>.json`. "The suite exists / passed once in CI last week" does not close a story.
+5. **Evidence is committed, not gitignored.** `.pipeline/results/` is the audit trail — it is version-controlled. Eval runners write their JSON there; the `test_runs` ledger in state.yaml is append-only (the orchestrator never overwrites prior entries).
+6. **A full-loop integration test per completed phase is mandatory.** Following the pattern proven in distribution-agent, each phase ships a `tests/loop-phase{N}.test.ts` (or the stack's equivalent) that drives the phase end-to-end; the **phase is not `done` until it passes** and its run is in the ledger.
+7. **Provisional gold sets are marked, not trusted.** Evals may run against a provisional/synthetic gold set, but until it is human-curated the stored report must carry `ship_gate: NOT BINDABLE`. This enforces eval-spec's anti-theater rule at storage time — a NOT-BINDABLE result can inform, never gate.
+8. **Green run → git checkpoint.** After every test/eval run recorded as **green** in the ledger, the engine commits `git add -A && git commit -m "checkpoint(<story-id>): tests <n>/<n> green, evals <summary>"` and, if a remote is configured, pushes to the **feature/dev branch**. Rules: **never commit secrets** (`.env*` stays gitignored — run a secrets scan before every commit); **never push to `main`/prod branch autonomously** (that is deploy-gate territory); a **red run commits nothing**. If no remote exists, ask the human **once** whether to create one (`gh repo create`), record the answer under `git:` in state.yaml, and stop asking. Purpose: every green state is recoverable — a failing later story rolls back to the last checkpoint instead of thrashing (pairs with the story budget rule).
+9. **Boundary violations route up, not around:** a story that needs a new dependency, endpoint, or PII touch stops and routes to the owning gate (security-baseline / api-contract-definition / eval-spec). The engine may not self-approve scope.
+10. **Budgets:** max token/iteration budget per story set in state.yaml; exhausted → park the story, report, continue others.
 
 ### Phase 4 (Ship & Verify)
+- **Pre-handoff first (new — closes the first-run gap):** when the build engine reports the last story done, the orchestrator routes FIRST to **qa-verify in pre-handoff mode against localhost / the dev server — before deploy-gate**. The pass is the Eval-Spec journey script PLUS the day-0 first-run checklist (fresh-account onboarding end-to-end; every P0 journey works with zero optional infra; onboarding consumes the user's real input). **No artifact reaches deploy-gate until this pass is green.** This exists because a real Level-3 build (distribution-agent) passed every design gate and 56/56 tests yet failed in the founder's first five minutes — the failures were first-run/integration failures, exactly qa-verify's class, and they were caught by no earlier gate because journey verification previously ran only after a deploy.
 - deploy-gate rules unchanged: staging autonomous; **production deploy, schema migration, DNS, real money/emails = HARD STOP for explicit human yes**, even in bypass-permissions mode.
-- qa-verify runs on every staging deploy (full pass) and after every approved prod deploy (verification + monitoring window). Its fix loop is staging-only and bounded; prod findings get a rollback recommendation and a human.
+- qa-verify then runs on every staging deploy (full pass) and after every approved prod deploy (verification + monitoring window). Its fix loop is pre-handoff/staging-only and bounded; prod findings get a rollback recommendation and a human.
+- The full chain is therefore: build engine → **qa-verify (pre-handoff, localhost)** → deploy-gate → qa-verify (staging) → prod approval → qa-verify (prod + monitoring). The orchestrator owns every hop; gates only signal completion.
 - **Correction to prior chain doc:** deploy-gate is no longer the terminal gate. qa-verify's clean monitoring window is. If deploy-gate's SKILL.md says "terminal," this skill supersedes.
 
 ## Resumption protocol
@@ -131,3 +143,8 @@ Everything else proceeds autonomously. That's the contract: autonomous through s
 - ❌ Re-interviewing a user who arrived with a complete spec → ✅ spec-intake: import covered gates, gap-interview the rest
 - ❌ A crisp problem doc used to skip eval-spec → ✅ eval-spec is never imported by omission; no criteria in the doc = it runs in full
 - ❌ A gate routing to the next gate itself → ✅ gates signal completion; this skill owns every routing decision
+- ❌ Handing a human a "done" build verified only by green unit tests → ✅ qa-verify pre-handoff drives the real first-run journey on localhost before deploy-gate
+- ❌ "Works if you start the worker / set the key first" shipped as done → ✅ every P0 journey runs from a clean clone with zero optional infra
+- ❌ Marking a story done because the test file exists → ✅ tests + named evals run THIS session and recorded in the `test_runs` ledger
+- ❌ A green run left uncommitted, then thrashing to recover it → ✅ green run → checkpoint commit (never secrets, never main)
+- ❌ Trusting a provisional gold set to gate a ship → ✅ stored report carries `ship_gate: NOT BINDABLE` until human-curated
