@@ -1,31 +1,68 @@
-# claude-skills
+# pm-gates
 
-Personal [Claude Code](https://claude.com/claude-code) skills — a connected set of product gates that run across the lifecycle of any build, from "I have an idea" to "this is going to production." They keep the work honest about *what problem we're solving*, *what "good" measurably means*, *whether the architecture holds*, and *whether it's safe to ship*.
+**The PM governance layer for autonomous build loops.**
 
-These are installed as global skills under `~/.claude/skills/`. This repo is that directory under version control.
+The popular approaches to autonomous building all constrain the *engineer* side — code discipline, context hygiene, role separation. None of them answer the product questions: *Is this the right thing to build? How will we know it works? What must never happen without a human?*
 
-## Skills
+pm-gates is that layer: nine connected gates that run across the lifecycle of any build, from "I have an idea" to "this is verified in production." They keep the work honest about what problem we're solving, what "good" measurably means, whether the architecture holds, and whether it's safe to ship.
+
+```
+DEFINE     brainstorm → eval-spec → architecture-checkpoint
+CONTRACT   api-contract-definition → security-baseline
+BUILD      [your engine: any autonomous dev loop / plain Claude Code]
+             rules: test-first iron law · fresh context per story · eval-spec = done
+SHIP       deploy-gate  (staging autonomous · prod = HARD STOP for a human)
+VERIFY     qa-verify    (real browser · bounded fix loop · post-deploy watch)
+```
+
+`loop-orchestrator` is the single source of truth for sequence, routing, state, and resumption. `eval-spec` carries the AI-native eval loop end to end: the spec it produces is simultaneously the build engine's definition-of-done and `qa-verify`'s browser script. Each gate bounces cheaply back to the previous one when something isn't clear enough — if you can't write the eval, the problem isn't understood well enough to build.
+
+## The skills
 
 | Skill | When it fires | What it does |
-|-------|---------------|--------------|
-| [`brainstorm`](brainstorm/SKILL.md) | Start of any new product/feature/"I want to build X" | Gated discovery interview (one question at a time). Forces clarity on goal → prioritized problem → user journey → decision surface → MVP → phases. Produces a Brainstorm Brief. |
-| [`eval-spec`](eval-spec/SKILL.md) | After MVP scope locks, before/alongside architecture | Turns "what good looks like" into measurable pass/fail contracts. Classifies each feature as deterministic test vs. probabilistic eval vs. guardrail; builds gold datasets; sets ship/no-ship thresholds. |
-| [`architecture-checkpoint`](architecture-checkpoint/SKILL.md) | Before proposing a full system design or major change | Validates architecture against PM constraints: scalability, DB/cache strategy, error handling, observability, cost, explicit trade-offs. |
-| [`api-contract-definition`](api-contract-definition/SKILL.md) | Designing service-to-service or public APIs | Defines API contracts (OpenAPI/gRPC) before implementation — versioning, pagination, error handling, schema consistency. |
-| [`security-baseline`](security-baseline/SKILL.md) | Any new service, API, or auth flow | Minimum security bar: encryption, secrets management, PII handling, auth/authz, compliance scope, dependency CVEs. |
-| [`deploy-gate`](deploy-gate/SKILL.md) | Before any deploy / migration / public URL goes live | Runtime safety gate on the *built artifact*: re-scans for leaked secrets/PII/public endpoints, re-checks deps for CVEs, requires explicit human approval for prod deploy and schema migration. |
+|---|---|---|
+| `loop-orchestrator` | Start of any build cycle; on resume; whenever routing is unclear | Owns the end-to-end loop: scale-adaptive routing (Levels 0–3), phase rules, `.pipeline/state.yaml`, human hard stops |
+| `brainstorm` | Start of any new product/feature/"I want to build X" | Gated discovery interview. Goal → prioritized problem → decision surface → true MVP. Produces a Brainstorm Brief |
+| `eval-spec` | After MVP scope locks, before/alongside architecture | Turns "what good looks like" into measurable pass/fail contracts: deterministic tests vs. probabilistic evals vs. guardrails, gold datasets, ship/no-ship thresholds |
+| `architecture-checkpoint` | Before proposing a system design or major change | Validates architecture against PM constraints: scalability, DB/cache, error handling, observability, cost, explicit trade-offs |
+| `api-contract-definition` | Designing service-to-service or public APIs | OpenAPI/gRPC contracts before implementation: versioning, pagination, errors, schema consistency |
+| `security-baseline` | Any new service, API, or auth flow | Minimum security bar: encryption, secrets, PII, auth/authz, compliance scope, dependency CVEs |
+| `deploy-gate` | Before any deploy / migration / public URL goes live | Re-scans the *built artifact* for secrets/PII/public-surface drift; hard-stops prod deploy and schema migration for explicit human approval |
+| `qa-verify` | After every staging or prod deploy | Drives a real browser through the Eval Spec's user journeys; bounded fix loop on staging; post-deploy monitoring window on prod |
 
-## How they chain
+## Where the flow is defined
+
+Three places, deliberately: **logic** in `loop-orchestrator/SKILL.md`, a **declaration** in your repo's `CLAUDE.md`, and **state** in `.pipeline/state.yaml` (template in `loop-orchestrator/assets/`). State in the repo is what makes the loop resumable across sessions and legible to parallel workers.
+
+Add to any target repo's `CLAUDE.md`:
+
+```markdown
+## Build pipeline
+This repo uses the pm-gates loop. Before any build/deploy work,
+consult the loop-orchestrator skill and read .pipeline/state.yaml.
+Never deploy to prod or run migrations without deploy-gate approval.
+```
+
+## Install
+
+### As a plugin (recommended — to share)
+
+This repo is a Claude Code plugin marketplace:
 
 ```
-brainstorm ──▶ eval-spec ──▶ architecture-checkpoint ──▶ ...build... ──▶ security-baseline ──▶ deploy-gate
-                                    │
-                       api-contract-definition (for APIs)
+/plugin marketplace add deepikabg/pm-gates
+/plugin install pm-gates@deepikabg
 ```
 
-`eval-spec` carries the AI-native eval loop end to end: it now specifies the runtime eval service/feedback/dashboard (Step 7), and `architecture-checkpoint` verifies that loop is built in as a first-class component.
+The plugin is `pm-gates` (the product); the marketplace is `deepikabg` (the author) — defined in [`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json).
 
-Each gate bounces cheaply back to the previous one when something isn't clear enough: if you can't write the eval, the problem isn't understood well enough to build.
+### As a live skills directory (for editing the source)
+
+```
+git clone git@github.com:deepikabg/pm-gates.git ~/.claude/skills
+```
+
+Each skill directory at the repo root is auto-discovered by Claude Code from `~/.claude/skills/`.
 
 ## Layout
 
@@ -33,26 +70,19 @@ Each gate bounces cheaply back to the previous one when something isn't clear en
 <skill-name>/
   SKILL.md            # frontmatter (name, description) + instructions
   references/         # supporting docs the skill pulls in
-                      #   brainstorm/references/pm-frameworks.md, eval-spec/references/eval-craft.md
+  assets/             # templates the skill ships (e.g., loop-orchestrator/assets/state-template.yaml)
+.claude-plugin/
+  marketplace.json    # makes this repo an installable plugin marketplace
 ```
 
-## Install
+## Design principles
 
-### As a plugin (recommended — to share)
+Test-first story execution, fresh context per story, scale-adaptive routing, browser-verified shipping with a bounded fix loop, and evals as the spine from spec to verification. Autonomous through staging, human-gated at the irreversible moments. One backbone, one artifact model.
 
-This repo is a Claude Code plugin marketplace. Anyone can install all six skills in two commands:
+## Acknowledgments
 
-```
-/plugin marketplace add deepikabg/claude-skills
-/plugin install pm-gates@deepika-pm-skills
-```
+No code or text in this project is copied from other projects, but several of its principles stand on the shoulders of the frameworks that pioneered them: the test-first "iron law" is Superpowers' (Jesse Vincent); fresh-context-per-story execution and scale-adaptive planning tracks come from GSD and the BMAD Method; browser-driven QA with a fix→regression-test loop and post-deploy monitoring come from gstack (Garry Tan, MIT). The eval-spec spine, the gate chain, and the irreversible-action hard stops are original to this project. Credit where it's due — go star them.
 
-The plugin is `pm-gates`; the marketplace is `deepika-pm-skills` (defined in [`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json)).
+## License
 
-### As a live skills directory (for editing the source)
-
-```bash
-git clone git@github.com:deepikabg/claude-skills.git ~/.claude/skills
-```
-
-Each skill directory is auto-discovered by Claude Code from `~/.claude/skills/`.
+[MIT](LICENSE)
