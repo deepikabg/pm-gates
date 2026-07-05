@@ -1,0 +1,36 @@
+# pm-gates pipeline state — the loop's memory across sessions and workers.
+# Lives at .pipeline/state.yaml in the target repo. Update after every gate/story event.
+
+pipeline:
+  version: 1
+  project: ""            # repo / product name
+  level: null             # 0 | 1 | 2 | 3  (scale-adaptive classification)
+  classified_by: ""      # human | claude
+  build_engine: ""       # name of the autonomous dev loop, or claude-code
+  created: ""            # ISO timestamp
+
+gates:
+  brainstorm:            { status: pending, artifact: "", artifact_sha: "", passed_at: "" }
+  eval-spec:             { status: pending, artifact: "", artifact_sha: "", passed_at: "" }
+  architecture-checkpoint: { status: pending, artifact: "", artifact_sha: "", passed_at: "" }
+  api-contract-definition: { status: pending, artifact: "", artifact_sha: "", passed_at: "" }
+  security-baseline:     { status: pending, artifact: "", artifact_sha: "", passed_at: "" }
+  deploy-gate:           { status: pending, report: "", staging_url: "", prod_approved_by: "", approved_at: "" }
+  qa-verify:             { status: pending, report: "", verdict: "", monitoring_window_end: "" }
+  # status: pending | in-progress | passed | failed | skipped(level-N)
+
+build:
+  stories: []
+  # - id: S-001
+  #   title: ""
+  #   eval_criteria: []        # Eval-Spec criteria this story satisfies
+  #   failing_test_written: false   # TDD iron law — must be true before code
+  #   status: pending           # pending | in-progress | done | parked
+  #   budget: { max_iterations: 5, used: 0 }
+  #   worker_context: fresh     # fresh context per story — never full PRD
+
+approvals: []
+  # - { action: "prod deploy", target: "", approved_by: "", at: "", rollback_plan: "" }
+
+parked: []                # stories or findings awaiting human direction
+perf_baseline: ".pipeline/perf-baseline.json"
