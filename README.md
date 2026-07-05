@@ -10,9 +10,11 @@ pm-gates is that layer: eight connected gates that run across the lifecycle of a
 DEFINE     brainstorm → eval-spec → architecture-checkpoint
 CONTRACT   api-contract-definition → security-baseline
 BUILD      [your engine: any autonomous dev loop / plain Claude Code]
-             rules: test-first iron law · fresh context per story · eval-spec = done
+             rules: test-first iron law · fresh context per story
+                    done = tests+evals run & stored · green run = git checkpoint
+VERIFY⁰    qa-verify    (PRE-HANDOFF · localhost · day-0 first-run checklist · BEFORE any deploy)
 SHIP       deploy-gate  (staging autonomous · prod = HARD STOP for a human)
-VERIFY     qa-verify    (real browser · bounded fix loop · post-deploy watch)
+VERIFY     qa-verify    (staging → prod · real browser · bounded fix loop · post-deploy watch)
 ```
 
 `loop-orchestrator` is the single source of truth for sequence, routing, state, and resumption — gates signal completion and never route themselves. It also owns **spec-intake**: arrive with an existing PRD and the loop imports the gates it satisfies, gap-interviews only what's missing, and never re-runs the full discovery ceremony (eval-spec is the one gate that can't be skipped by omission). `eval-spec` carries the AI-native eval loop end to end: the spec it produces is simultaneously the build engine's definition-of-done and `qa-verify`'s browser script. Each gate bounces cheaply back to the previous one when something isn't clear enough — if you can't write the eval, the problem isn't understood well enough to build.
@@ -28,7 +30,7 @@ VERIFY     qa-verify    (real browser · bounded fix loop · post-deploy watch)
 | `api-contract-definition` | Designing service-to-service or public APIs | OpenAPI/gRPC contracts before implementation: versioning, pagination, errors, schema consistency |
 | `security-baseline` | Any new service, API, or auth flow | Minimum security bar: encryption, secrets, PII, auth/authz, compliance scope, dependency CVEs |
 | `deploy-gate` | Before any deploy / migration / public URL goes live | Re-scans the *built artifact* for secrets/PII/public-surface drift; hard-stops prod deploy and schema migration for explicit human approval |
-| `qa-verify` | After every staging or prod deploy | Drives a real browser through the Eval Spec's user journeys; bounded fix loop on staging; post-deploy monitoring window on prod |
+| `qa-verify` | **Pre-handoff** (build done, on localhost, before any deploy); then after every staging or prod deploy | Drives a real browser through the Eval Spec's user journeys + a **day-0 first-run checklist** (fresh-account onboarding, zero-optional-infra, real user input); bounded fix loop on localhost/staging; post-deploy monitoring window on prod |
 
 ## Where the flow is defined
 
@@ -78,6 +80,20 @@ Each skill directory at the repo root is auto-discovered by Claude Code from `~/
 ## Design principles
 
 Test-first story execution, fresh context per story, scale-adaptive routing, browser-verified shipping with a bounded fix loop, and evals as the spine from spec to verification. Autonomous through staging, human-gated at the irreversible moments. One backbone, one artifact model.
+
+## Changelog
+
+### v1.1 — *no handoff without a driven journey; no done without stored evidence; no green without a checkpoint*
+
+Hardened from a real Level-3 build (`distribution-agent`, 2026-07-05) that passed every design gate and shipped 56/56 green tests, yet handed the founder a product that failed in the first five minutes — email-confirmation dead-end on first signup, a background worker required to see the first result, extraction that ignored the founder's real URL. All three were first-run/integration failures caught by no earlier gate, because journey verification only ran *after* a deploy.
+
+- **qa-verify gains a `pre-handoff` mode** — the Eval-Spec journeys **plus a day-0 first-run checklist** run against `localhost` the moment the build is done and a human is about to become the user, *before* deploy-gate. Fresh-account onboarding must complete end-to-end, every P0 journey must work with zero optional infrastructure, and onboarding must consume the user's real input. Chain is now: build → **qa-verify (pre-handoff)** → deploy-gate → qa-verify (staging) → prod approval → qa-verify (prod).
+- **Evidence at every phase, stored in state** — a story/phase is `done` only when its tests *and* named Eval-Spec criteria were run this session and recorded in an append-only `test_runs` ledger, with JSON reports committed under `.pipeline/results/`. A full-loop `tests/loop-phase{N}` test is mandatory per phase; provisional gold sets are stored `ship_gate: NOT BINDABLE` until human-curated.
+- **Git checkpoint after every green run** — the engine commits `checkpoint(<story-id>): tests n/n green…` and pushes to the feature/dev branch (never `main`; never with secrets; a red run commits nothing), so every green state is recoverable instead of thrashed toward.
+
+### v1.0 — the eight-gate loop
+
+brainstorm → eval-spec → architecture-checkpoint → api-contract-definition → security-baseline → deploy-gate → qa-verify, orchestrated by `loop-orchestrator` with scale-adaptive routing, spec-intake, and human hard stops at irreversible actions.
 
 ## Acknowledgments
 
