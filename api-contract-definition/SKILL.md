@@ -160,10 +160,10 @@ Scenario 3 — Rate limited
 - [ ] Versioning path is explicit
 - [ ] Backwards-compatibility promise is documented
 
-## Handoff (Next in the SDLC Chain)
-Once the contract is approved, always run **security-baseline** next — before any implementation — to validate PII handling, secrets, auth/authz, compliance scope, and dependency CVEs against the contract you just defined.
+## Handoff
+Once the contract is approved, write the contract files' paths + a `passed` entry to `.pipeline/state.yaml`, then **signal loop-orchestrator — it owns routing; this skill never chooses the next gate.** (Per the orchestrator's rules, security-baseline runs next — always, before any implementation — validating PII handling, secrets, auth/authz, compliance scope, and dependency CVEs against the contract just defined.)
 
-> "API contract locked. Before we write a line of implementation, I'm running the Security Baseline to make sure these endpoints handle PII and auth correctly."
+> "API contract locked and logged to state — handing to the orchestrator for the next gate."
 
 ## Anti-Patterns
 - ❌ Designing the contract after the code exists → ✅ contract first, code to the contract
