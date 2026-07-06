@@ -148,16 +148,13 @@ Flag and re-propose if the design:
 ## Intake (What Feeds This Skill)
 For AI-native or high-stakes builds, this skill should receive an **Eval Spec** (from `eval-spec`) alongside the Brainstorm Brief. The eval spec's Step 7 specifies the runtime eval loop — which means the architecture **must include the eval/feedback service as a first-class component**, not an afterthought. If no eval spec exists yet for an AI-native build, pause and run `eval-spec` first.
 
-## Handoff (Next in the SDLC Chain)
-Once the architecture is approved, route to the next skill by what the system actually contains. Trigger the FIRST that applies, then continue down the chain:
-
-1. **If it exposes APIs or has service-to-service boundaries** (public endpoints, webhooks, internal contracts) → **api-contract-definition**, to lock versioning, pagination, and error schemas before implementation.
-2. **Always, before any implementation begins** → **security-baseline**, to validate PII handling, secrets, auth, compliance scope, and dependency CVEs.
+## Handoff
+Once the architecture is approved, write `Architecture.md` + a `passed` entry to `.pipeline/state.yaml`, then **signal loop-orchestrator — it owns routing; this skill never chooses the next gate.** (Per the orchestrator's rules, the contract gates run next: api-contract-definition where the system exposes APIs or service boundaries, then security-baseline — always — before any implementation.)
 
 (The eval-loop check that used to live in a separate gate is now folded in here, validated against the Eval Spec — there's no separate step to forget.)
 
-Tell the user which skill is firing next and why, e.g.:
-> "Architecture approved — and since it's AI-native, I confirmed the eval/feedback service is a first-class component per the eval spec. This system exposes an API, so I'm running API Contract Definition next to lock the schema before we build."
+Say, e.g.:
+> "Architecture approved — and since it's AI-native, I confirmed the eval/feedback service is a first-class component per the eval spec. Logged to state — handing to the orchestrator for the next gate."
 
 ## Anti-Patterns
 - ❌ Choices with no rationale → ✅ every choice tied to a stated constraint
