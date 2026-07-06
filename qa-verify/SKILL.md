@@ -39,6 +39,7 @@ prod approval ──► qa-verify (PROD + monitoring window)
 2. **API contract** (from `api-contract-definition`): expected endpoints + error taxonomy, for network-request verification.
 3. **Deploy Gate Report**: the target URL/environment and what changed — scope verification to what shipped.
 4. **Performance baseline** (`.pipeline/perf-baseline.json` if it exists): prior load times / Core Web Vitals to diff against. If absent, this run CREATES the baseline.
+5. **Approved prototype** (`.pipeline/prototype/` + Prototype-Review, if the triad ran): the human-approved screens and copy for the P0 journeys. In pre-handoff mode, flag material drift between what was approved and what was built (missing states, changed copy on key moments, broken journey shape) — drift is a finding, not a preference.
 
 If the Eval Spec has no Critical User Journeys section (older spec format), do not halt: compile the journey list from its user-facing deterministic tests and guardrails, record the compiled list in `.pipeline/state.yaml` for human review, and flag that the Eval Spec should add a journeys section in its next revision. If neither journeys nor user-facing criteria exist → STOP: the spec was not autonomous-ready; route back to eval-spec.
 
