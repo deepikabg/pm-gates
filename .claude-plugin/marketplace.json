@@ -5,17 +5,19 @@
     {
       "name": "pm-gates",
       "source": { "source": "path", "path": "./" },
-      "description": "PM governance layer for autonomous build loops: gated pipeline from brainstorm through browser-verified deploy, with scale-adaptive routing, pre-handoff first-run verification, stored test/eval evidence, and human hard stops at irreversible actions.",
-      "version": "1.1.0",
+      "description": "PM governance layer for autonomous build loops: gated pipeline from brainstorm through browser-verified deploy — clickable-prototype triad approval, dependency-ordered story decomposition with a GitHub Projects view, scale-adaptive routing, pre-handoff first-run verification, stored test/eval evidence, and human hard stops at irreversible actions.",
+      "version": "1.2.0",
       "license": "MIT",
       "strict": false,
       "skills": [
         "./loop-orchestrator",
         "./brainstorm",
         "./eval-spec",
+        "./prototype",
         "./architecture-checkpoint",
         "./api-contract-definition",
         "./security-baseline",
+        "./story-map",
         "./deploy-gate",
         "./qa-verify"
       ]
