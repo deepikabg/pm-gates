@@ -123,7 +123,12 @@ This single question kills the "overcomplicating features for no reason" failure
 
 **Phases:** Cut features are *sequenced, not deleted*. For each post-MVP phase: what ships, what it unlocks, and the **signal that triggers it** (gate on learning, not calendar — e.g., "build Phase 2 only after MVP hits >40% weekly return").
 
-**GTM (always close here):** > "Where does your prioritized audience hang out, online and offline?" (e.g. moms visit schools, read parenting blogs.) Then sketch the first user stories for the MVP build.
+**GTM (always close here):** > "Where does your prioritized audience hang out, online and offline?" (e.g. moms visit schools, read parenting blogs.) Then sketch the first use cases the MVP must serve — **use cases, not build tasks**: they live in the Brief as scope, and `story-map` later cuts the actual build issues from the approved architecture, traced back to these.
+
+**Positioning & Voice (one pass, three questions):** the prototype's copy and all later marketing inherit this — don't leave it to be improvised.
+1. > "In one line, to your target user: what is this and why should they care?" *(positioning)*
+2. > "Three adjectives for how it should sound and feel?" *(voice — the prototype gate will confirm these as design adjectives too)*
+3. > "The one message a user must walk away with?" *(key message)*
 
 ---
 
@@ -169,14 +174,16 @@ Cheapest test of the assumption: [landing page / manual version / fake-the-featu
 ## Cut (Won't build / don't automate)
 - [Feature] — [why: low frequency / low impact / distracts]
 
-## GTM
-Where the audience is (on/offline): [...]   First user stories: [...]
+## GTM & Positioning
+Where the audience is (on/offline): [...]
+First use cases (scope, not build tasks — story-map cuts issues later): [...]
+Positioning (one line): [...]   Voice: [3 adjectives]   Key message: [...]
 
 ## Parking Lot
 [Solution ideas, open questions to revisit]
 
-## → Next: Architecture Checkpoint
-[Hand off MVP scope + constraints + decision surface]
+## → Next: handed to loop-orchestrator
+[MVP scope + constraints + decision surface + positioning/voice feed the next gates: eval-spec, then prototype + triad approval]
 ```
 
 ## Handoff
