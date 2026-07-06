@@ -94,13 +94,11 @@ Flag and require PM + Security review if:
 ## Approval Workflow
 Claude surfaces the proposal → PM (plus Security/Legal where required) reviews → approve / reject / revise.
 
-## Handoff (End of the Design Chain → Build)
-The security baseline is the final design gate. Once the PM (plus Security/Legal where required) approves:
+## Handoff
+The security baseline is the final *design* gate. Once the PM (plus Security/Legal where required) approves, write `Security-Baseline.md` + a `passed` entry to `.pipeline/state.yaml`, then **signal loop-orchestrator — it owns routing; this skill never chooses the next gate.** (Per the orchestrator's rules, the spec-readiness check and then **story-map** run next — the design is decomposed into a dependency-ordered, traceable build plan before any story is built. Implementation starts only from that approved plan.)
 
-**All specs are locked: MVP scope (brainstorm) → architecture (architecture-checkpoint) → [eval spec] → [API contract] → security baseline.**
-
-Proceed to implementation. Tell the user the design chain is complete and what they're building against, e.g.:
-> "Security baseline approved. The full design chain is locked — MVP scope, architecture, eval loops, API contract, and security are all signed off. Ready to build against these specs. Want me to start implementation?"
+**All design specs are now locked: MVP scope (brainstorm) → eval spec → prototype (triad-approved) → architecture → [API contract] → security baseline.** Say, e.g.:
+> "Security baseline approved — the full design chain is locked and logged to state. Handing to the orchestrator: next is the spec-readiness check, then story-map breaks this into the dependency-ordered build plan for your approval."
 
 During the build, the remaining quality gates (test strategy, self code review) run as human-on-the-loop checks — Claude proposes, you spot-check — not as blocking design gates.
 
