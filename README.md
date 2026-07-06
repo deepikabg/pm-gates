@@ -6,6 +6,8 @@ The popular approaches to autonomous building all constrain the *engineer* side 
 
 pm-gates is that layer: ten connected gates that run across the lifecycle of any build, from "I have an idea" to "this is verified in production." They keep the work honest about what problem we're solving, what "good" measurably means, how it should feel, whether the architecture holds, and whether it's safe to ship.
 
+It's a methodology made executable — each gate encodes the judgment a product lead brings to one moment of a build, so an autonomous engine (or a plain Claude Code session) can move fast without shipping the wrong thing, an unmeasurable thing, or an unsafe thing. It is not a product with a user base; it's a working theory of the AI-native PM's job. The sharpest gates were written *after* real build cycles exposed what a clean spec and green tests still miss — the pre-handoff gate exists because a build passed every design check and 56/56 tests, then broke for its first user in five minutes (the changelog traces each such lesson).
+
 ```
 DEFINE     brainstorm → eval-spec → prototype
              (design prefs → clickable P0 journeys with real copy → riskiest-assumption test)
