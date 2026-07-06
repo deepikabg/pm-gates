@@ -12,9 +12,24 @@ pipeline:
 gates:
   brainstorm:            { status: pending, artifact: "", artifact_sha: "", passed_at: "" }
   eval-spec:             { status: pending, artifact: "", artifact_sha: "", passed_at: "" }
+  prototype:
+    status: pending            # skipped(headless) allowed — note why
+    artifact: ""               # .pipeline/prototype/ path or hosted URL
+    artifact_sha: ""
+    passed_at: ""
+    design_prefs: {}           # elicited from the user: mood, colors, references, density, mode
+    validation: { method: "", verdict: "", decision: "" }   # verdict: validated|invalidated|inconclusive · decision: proceed|pivot|kill
   architecture-checkpoint: { status: pending, artifact: "", artifact_sha: "", passed_at: "" }
   api-contract-definition: { status: pending, artifact: "", artifact_sha: "", passed_at: "" }
   security-baseline:     { status: pending, artifact: "", artifact_sha: "", passed_at: "" }
+  story-map:
+    status: pending
+    artifact: ""               # Story-Map.md
+    artifact_sha: ""
+    passed_at: ""
+    traceability: ""           # complete | holes (holes block the gate)
+    plan_approved_by: ""       # human approval of the build's shape
+    github: { synced: false, project_url: "" }   # projection is a view; this file is the truth
   deploy-gate:           { status: pending, report: "", staging_url: "", prod_approved_by: "", approved_at: "" }
   qa-verify:                      # runs in three modes; orchestrator routes between them
     pre_handoff: { status: pending, target: "localhost", report: "", verdict: "", day0_checklist: "" }  # first-run gate — runs BEFORE deploy-gate, no deploy
@@ -25,6 +40,12 @@ gates:
   #   artifact = source doc path, artifact_sha = its hash (standard invalidation applies).
   #   eval-spec may only be imported if the doc contains measurable pass/fail criteria.
 
+triad_approval:            # Brief + Eval-Spec + Prototype approved TOGETHER by the human
+  approved: false
+  approved_by: ""
+  at: ""
+  shas: { brief: "", eval_spec: "", prototype: "" }   # any later edit to any of the three invalidates → re-approve
+
 intake:                    # populated only when the build started from a provided spec
   source_doc: ""           # path to the user-provided spec/PRD
   source_sha: ""
@@ -32,10 +53,17 @@ intake:                    # populated only when the build started from a provid
   gaps_resolved: false
 
 build:
-  stories: []
+  stories: []               # populated by story-map — the engine never adds stories itself
   # - id: S-001
   #   title: ""
-  #   eval_criteria: []        # Eval-Spec criteria this story satisfies
+  #   epic: ""                  # architecture component / phase this belongs to
+  #   eval_criteria: []        # Eval-Spec criteria this story satisfies (>=1, always)
+  #   journey: ""              # P0 journey it serves (traceability)
+  #   prototype_screens: []    # approved screens a UI story implements
+  #   depends_on: []           # story ids — the DAG; execute in topological batches
+  #   batch: 0                 # topological batch number
+  #   parallel: false          # true = no file overlap with batch peers; runs in an isolated git worktree
+  #   github_issue: 0          # issue number when projected (0 = not projected)
   #   failing_test_written: false   # TDD iron law — must be true before code
   #   status: pending           # pending | in-progress | done | parked
   #   done requires: tests run + named evals run THIS session, both recorded in test_runs below
