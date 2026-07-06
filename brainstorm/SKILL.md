@@ -97,7 +97,17 @@ Doing Move B here — at the cheapest stage, before anything exists — is what 
 
 ### GATE 4 — MVP Triage by Frequency × Impact (the discipline against over-building)
 
-**Move 1 — Riskiest assumption.** > "What must be TRUE for this to work that you're least sure of? If it's false, the whole thing collapses." The MVP exists to test *this*.
+**Move 1 — Riskiest assumption (enumerate → classify → score, don't just ask once).**
+Open with: > "What must be TRUE for this to work that you're least sure of? If it's false, the whole thing collapses." — but don't stop at the first answer. Enumerate candidate assumptions across the **four risk classes** (a product bet can collapse in four distinct ways):
+
+| Class | The assumption sounds like | Collapse mode |
+|---|---|---|
+| **Valuable** (demand) | "People actually have this problem and want it solved" | Nobody comes |
+| **Viable** (monetization/strategy) | "They'll pay / the unit economics work / we can reach them" | Usage without a business |
+| **Usable** (adoption behavior) | "They can self-serve through it / it fits their workflow" | They try it once and bounce |
+| **Feasible** (technical) | "The model/tech can actually do this reliably enough" | It works in the demo, not in the wild |
+
+Then score each candidate **impact-if-false × uncertainty** and pick the max. Two calibration notes: (1) most builds die on **valuable/viable** — founders systematically over-test feasibility because it's comfortable, so when in doubt, weight the strategy-level classes up; (2) the honest exception is AI-native systems, where "can the model do this reliably on real inputs" is frequently a *legitimate* top scorer — don't force a business assumption to win when the model bet is genuinely shakier. Record the winner **with its class** — the class determines the test instrument at the prototype gate (a pricing question can't be answered by a usability walkthrough).
 
 **Move 2 — Frequency triage (apply to EVERY candidate use case).**
 > "How often does this use case actually fire — daily, weekly, monthly, or one-time?"
@@ -161,6 +171,8 @@ Journey + painpoints: [...]   Segment bet: [existing / new]
 
 ## Riskiest Assumption
 [The one thing that must be true. MVP exists to test THIS.]
+Class: [valuable / viable / usable / feasible]   Score: [impact-if-false × uncertainty vs. runners-up]
+Runners-up considered: [...]   Planned test instrument (by class): [...]
 
 ## MVP (Must-Have) — frequency-tagged
 - [ ] [Feature] — freq: [daily/weekly/…] — tests assumption / enabling value
