@@ -49,6 +49,7 @@ Don't invent metrics top-down. Derive them from failures:
 2. **Open coding.** One domain expert (a "benevolent dictator") reviews 20–50 (scale to 50–100 for production) traces and writes open-ended notes on what's wrong — qualitative journaling, no fixed categories yet.
 3. **Axial coding → taxonomy.** Cluster notes into a failure taxonomy that is: **mutually exclusive** (a failure fits one category), **mechanism-distinct** (can't collapse two), and **root-cause not symptom** ("retrieved wrong context," not "hallucination").
 4. **Prioritize by frequency × impact.** Fix obvious bugs immediately (don't write an eval for something a one-line prompt fix solves). Write evals for the high-frequency/high-impact categories that remain.
+5. **The taxonomy also becomes executable state:** each high-frequency data-corruption category (duplicate records, empty/partial maps, half-migrated rows) ships as a **dirty-state fixture** (`tests/fixtures/dirty/`) that qa-verify re-runs the P0 journeys against — the failure catalog tested as *starting conditions*, not just as outputs.
 
 ### Step 3 — For PROBABILISTIC features: gold standard + binary criteria
 
