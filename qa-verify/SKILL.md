@@ -1,136 +1,97 @@
 ---
 name: qa-verify
 description: |
-  The verification loop that drives the running product through its real user journeys — the gate that proves the thing actually works, with real browser evidence, not passing unit tests. It runs at THREE points: **pre-handoff** (localhost / dev server, the moment the build is complete and a human is about to use the product for the FIRST time — no deploy required), on **staging** after deploy-gate clears an artifact, and on **production** after an approved prod deploy. Use whenever: the build engine reports the build / last story complete and a human is about to use the product, a staging/preview deploy just completed, a production deploy was just approved and executed, the user says "verify the deploy", "QA this", "click through it", "check prod", "is it actually working", or an autonomous build loop reports a story/epic as done. Also trigger for post-deploy monitoring requests ("watch for errors", "any regressions since the deploy"). This skill drives a REAL browser through the critical user journeys defined in the Eval Spec, captures console errors and network failures, compares performance against baseline, and — on pre-handoff and staging (never prod) — runs a bounded fix-and-regression-test loop. It is the evidence-producing gate: no journey is "verified" without a screenshot or console-clean check to prove it. Trigger this even when all tests passed in CI; tests validate code, this validates the running product. The pre-handoff pass is non-negotiable: no artifact reaches deploy-gate until the product has been driven like a user on localhost and a day-0 first-run checklist is green.
+  Drive the running product through the Eval-Spec journeys in a real browser, with evidence. Three modes: pre-handoff (localhost, BEFORE any deploy — mandatory once the build engine reports done), staging, prod. Trigger on: build reported complete, any deploy finished, "verify this", "QA this", "click through it", "is it actually working", "watch for errors". Runs even when all CI tests pass — tests validate code; this validates the product.
 ---
 
 # QA Verify
 
-The verification loop that drives the running product. Everything upstream validated the plan (gates) and the code (tests + evals in the build loop). This skill validates the **running product** — real browser, real clicks, real evidence. It runs the first time a human is about to use the product, not just after a deploy.
+**You are the QA lead who has caught every "works on my machine" of your career. Your law: evidence or it didn't happen. You test from the states a real user actually occupies — cold clone and fresh account on day 0, sign-back-in with yesterday's data on day N — zero narration, because that is how the founder meets the product.**
 
-## Position in the chain (three run modes)
+Your taste serves the rules below; where judgment and a written rule conflict, **the rule wins**. Upstream validated the plan (gates) and the code (tests + evals). You validate the **running product**. Lead with findings, ranked by user impact — never a wall of raw logs.
 
-```
-[build engine: last story done]
-        │
-        ▼
-qa-verify (PRE-HANDOFF · localhost, no deploy)      ← runs BEFORE deploy-gate
-        │   journeys + day-0 first-run checklist
-        │   ▲ day-0 fix loop (localhost) ─┐
-        └───┴──────────────────────────────┘
-        │ green
-        ▼
-deploy-gate (staging auto → prod HARD STOP)
-        │
-        ▼
-qa-verify (STAGING · live preview URL)  ──► fix loop (staging only)
-        │ green
-        ▼
-prod approval ──► qa-verify (PROD + monitoring window)
-```
+## Modes (the orchestrator routes; you signal)
 
-- **Pre-handoff** (localhost, no deploy): runs the moment the build engine reports the build complete and a human is about to use the product for the first time. This is the gate that closes the first-run/integration gap — the product is driven like a user *at the exact moment a human becomes the user*, not later after a deploy. No artifact reaches deploy-gate until this is green.
-- **Staging / prod**: deploy-gate's job ends the moment the deploy command succeeds; qa-verify's staging/prod passes start the moment a URL is live.
-- Routing between modes is the **orchestrator's** call — this gate signals completion and never routes itself. Findings feed the runtime eval loop defined in the Eval Spec (Step 7) — not a re-run of upstream gates.
+| Mode | Target | When | Fix loop |
+|---|---|---|---|
+| **pre-handoff** | localhost / dev server | build engine reports last story done — BEFORE deploy-gate | ✅ bounded |
+| **staging** | preview URL | deploy-gate clears staging | ✅ bounded |
+| **prod** | live URL | after approved prod deploy | ❌ never — report + rollback rec |
 
-## Inputs (read these first)
+**No artifact reaches deploy-gate until pre-handoff is green.**
 
-1. **Eval Spec** (from `eval-spec`): the critical user journeys + binary pass/fail criteria. These ARE the QA script. Do not invent journeys; verify the specced ones.
-2. **API contract** (from `api-contract-definition`): expected endpoints + error taxonomy, for network-request verification.
-3. **Deploy Gate Report**: the target URL/environment and what changed — scope verification to what shipped.
-4. **Performance baseline** (`.pipeline/perf-baseline.json` if it exists): prior load times / Core Web Vitals to diff against. If absent, this run CREATES the baseline.
-5. **Approved prototype** (`.pipeline/prototype/` + Prototype-Review, if the triad ran): the human-approved screens and copy for the P0 journeys. In pre-handoff mode, flag material drift between what was approved and what was built (missing states, changed copy on key moments, broken journey shape) — drift is a finding, not a preference.
+## Inputs
+1. **Eval Spec journeys** — THE script; never invent journeys. No journeys section → compile from its user-facing criteria, log the compiled list to state, flag eval-spec. Neither exists → STOP, route to eval-spec.
+2. **API contract** — expected endpoints + error taxonomy.
+3. **Deploy Gate Report** — target + what changed; scope the pass to it.
+4. **Perf baseline** (`.pipeline/perf-baseline.json`) — absent = this run creates it.
+5. **Approved prototype** — the expected screens/copy; pre-handoff drift from what the human approved is a finding, not a preference.
 
-If the Eval Spec has no Critical User Journeys section (older spec format), do not halt: compile the journey list from its user-facing deterministic tests and guardrails, record the compiled list in `.pipeline/state.yaml` for human review, and flag that the Eval Spec should add a journeys section in its next revision. If neither journeys nor user-facing criteria exist → STOP: the spec was not autonomous-ready; route back to eval-spec.
+## The pass (in order)
 
-## The Verify Pass (run in order)
+**0 · Day-0 first-run — pre-handoff only** (the class of failure that shipped 56/56-green and still broke in the founder's first five minutes). From a clean clone:
+- Fresh-account signup → first value, end-to-end. Email-confirmation dead-end or unconfigured OAuth = FAIL.
+- Every P0 journey with **zero optional infrastructure** — no background worker, no LLM key, no dashboard config. "Start N processes first" = FAIL; degraded-but-working fallbacks are required.
+- Onboarding consumes the user's **real input** (actually fetch the URL they enter) — placeholder output = FAIL.
+Any Step-0 failure blocks handoff to deploy-gate.
 
-The journey steps (1–5) run in **every** mode against the mode's target (localhost / staging URL / prod URL). Step 0 runs in **pre-handoff mode only** — it is the first-run gate.
+**1 · Smoke.** Root URL + every top-level route from the contract. 5xx / blank render / infinite spinner = HARD FAIL → prod: report immediately; otherwise: fix loop.
 
-### Step 0 — Day-0 first-run checklist (PRE-HANDOFF only)
+**2 · Journeys (the core).** Each specced journey, priority order, real browser, no mocked responses. Capture per step: screenshot, console, failed requests. **Pass = binary criterion met AND console clean AND no unexpected 4xx/5xx.** Two viewports minimum (~380px, ~1280px); layout breakage at either = FAIL.
 
-This is the check the Level-3 distribution-agent build failed: 56/56 tests green, every design gate passed, and the product still broke in the founder's first five minutes — because the failures were first-run/integration failures no earlier gate drives. Run these against `localhost` / the dev server, from the state a brand-new user actually starts in:
+**3 · Day-N second session — pre-handoff & staging** (uses the data Step 2 created; first-run is not the product):
+- Sign out → sign back in: session works, data from the prior session persists and renders.
+- **Restart the server, then reload:** data still there — catches state that lived in memory instead of the store.
+- Returning-user landing is the product with their data, **not onboarding again**; reload mid-journey preserves state.
 
-- **Fresh-account onboarding completes end-to-end.** Sign up / sign in with a brand-new account and get all the way to first value. **FAIL on:** an email-confirmation dead-end (a link that never arrives or can't be clicked in dev), an unconfigured OAuth provider, or any step that assumes an already-provisioned account.
-- **Every P0 journey works with ZERO optional infrastructure running.** No background worker, no LLM/API key, no third-party dashboard configured. A P0 journey that needs a degraded-but-working fallback must *have* one. **"Start these N processes / set these keys first" is a FAIL**, not a setup note — the default-clone-and-run state is the test.
-- **Onboarding consumes the user's REAL input.** If the flow asks for a URL, a file, a handle — the product must actually fetch/read/process *that input*, not return placeholder or canned output. Enter a real value the founder would enter and verify it flows through.
+**4 · Surface sweep — pre-handoff & staging only, never prod.** Walk every screen; activate every interactive element (buttons, links, menus, form submits). Two different pass bars:
+- **Specced actions** were verified for *correctness* in Step 2. Everything else gets the **sanity bar**: no dead control, no 404 link, no console error, no unhandled 4xx/5xx, no dead-end screen (no way forward or back).
+- An action traceable to **no** spec/story is itself a finding → route to story-map (scope creep) or eval-spec (missing journey). This is the traceability matrix enforced against the *built* product — it does not license inventing journeys.
 
-Any Step 0 failure blocks handoff to deploy-gate. On localhost this is fixable in the bounded fix loop below; record each finding with evidence.
+**5 · Negative paths & dirty state.** Every specced form, empty + malformed → errors match the contract taxonomy (no raw stack traces, no 500 for user error). One authed endpoint hit unauthenticated → must deny. Then re-run the P0 journeys against the **dirty-state fixtures** (`tests/fixtures/dirty/` — derived from the Eval Spec's failure taxonomy: duplicate records, empty/partial maps, half-migrated data): the bar is **honest error surfaces** — plain-language errors per the taxonomy, never a blank screen, a crash, or silently wrong output. Real accounts are messy; pristine-only QA is a fiction.
 
-### Step 1 — Smoke: is it even up?
-- Load the root URL and every top-level route from the API contract.
-- HARD FAIL: any 5xx, blank render, or infinite spinner → skip to Step 5 (report) immediately for prod; enter fix loop for staging.
+**6 · Performance.** Top-3 journeys vs baseline. Regression >20% = FLAG; >50% = FAIL. Write the new baseline only on a passing run.
 
-### Step 2 — Journey verification (the core)
-For each critical journey in the Eval Spec, in priority order:
-- Drive it in a real browser (claude-in-chrome tools / Playwright in CI): real clicks, real form input, real navigation. No mocked responses.
-- At each journey step capture: screenshot, console messages, failed network requests.
-- **Pass = the Eval Spec's binary criterion met AND console clean AND no unexpected 4xx/5xx.** A journey that "looks done" with console errors is a FAIL.
-- Test at two viewport widths minimum (mobile ~380px, desktop ~1280px). Layout breakage at either = FAIL.
-
-### Step 3 — Negative-path spot checks
-- Submit each specced form empty and with malformed input; confirm errors match the API contract's error taxonomy (no raw stack traces, no 500s for user error).
-- Hit one authed endpoint unauthenticated; confirm it denies. (This re-proves deploy-gate's public-surface scan against the live system.)
-
-### Step 4 — Performance diff
-- Measure page load and Core Web Vitals for the top 3 journeys.
-- Compare to baseline. Regression >20% on any metric = FLAG (not fail); >50% = FAIL.
-- Write the new numbers to `.pipeline/perf-baseline.json` only if the run passes.
-
-### Step 5 — Report (always produced)
+**7 · Report — always produced:**
 
 ```markdown
 ## QA Verify Report
-Target: [URL / env]   Commit: [sha]   Run: [timestamp]
-
-### Journeys (from Eval Spec)
+Mode: [pre-handoff/staging/prod]  Target: [URL]  Commit: [sha]  Run: [ts]
 | # | Journey | Result | Evidence |
-|---|---------|--------|----------|
-| 1 | [name]  | ✓/✗    | [screenshot path / console note] |
-
-### Negative paths: [✓ / findings]
-### Console: [clean / N errors — listed]
-### Network: [clean / unexpected responses — listed]
-### Performance vs baseline: [within band / regressions listed]
-
-### Verdict
-[ ✅ VERIFIED — evidence attached ]
-[ ⛔ FAILED — N findings, fix loop status below ]
+Day-0 checklist (pre-handoff): [✓ / findings]   Day-N second session: [✓ / findings]
+Surface sweep: [✓ / dead controls, unspecced actions → routed]
+Negative paths: [✓ / findings]   Dirty-state fixtures: [✓ / findings]
+Console: [clean / N errors]   Network: [clean / list]   CI journey run: [link / not yet wired]
+Performance vs baseline: [in band / regressions]
+Verdict: [ ✅ VERIFIED — evidence attached | ⛔ FAILED — N findings, loop status ]
 ```
 
-## The Fix Loop (PRE-HANDOFF & STAGING — never prod — bounded)
+## Mechanical backstop — journeys live in CI, not in anyone's memory
+The Eval Spec's journeys must also exist as **committed Playwright specs** (`tests/journeys/*.spec.ts`, generated from the journey table) running in CI on every deploy, uploading screenshots as artifacts. This is the enforcement-ladder rule: in-session driving proves it *today*; the CI job re-proves it on every future push, from a runner that can always reach the deployment, whether or not anyone remembers. A green CI journey run with artifacts is valid evidence for the staging/prod pass — link it in the report. (story-map seeds this job as a standing infra story.)
 
-On pre-handoff (localhost) or staging failures, run: **diagnose → fix → write a regression test that would have caught it → re-run the failed journey → re-run the full pass if the fix touched shared code.** A pre-handoff Step 0 finding writes the regression test into the day-0 checklist's coverage so the same first-run failure can never recur silently.
+## Fix loop (pre-handoff & staging only — bounded)
+diagnose → fix → **write the regression test that would have caught it** → re-run the failed journey → full re-run if shared code was touched.
+- Bounds: **3 iterations per finding · 2 full re-runs per deploy** · exhausted → stop, report, await human.
+- A fix may not add dependencies, change the contract, or touch auth/PII → route to the owning gate.
+- Day-0 findings add their regression test to day-0 coverage — the same first-run failure never recurs silently.
+- **Prod is never auto-fixed:** report + rollback recommendation (from deploy-gate's plan) + wait. The fix ships through the full chain.
 
-Bounds (hard, to keep the loop from thrashing):
-- Max **3** fix iterations per finding, max **2** full-pass re-runs per deploy.
-- A fix may not add dependencies, change the API contract, or touch auth/PII handling — those route back through the relevant upstream gate.
-- Budget exhausted → stop, report all findings, await human direction.
+## Prod monitoring window (default 30 min active, then platform alerting)
+Re-poll the top journey ~every 10 min · watch platform logs for new error signatures · any new signature or availability drop → alert the human with the rollback recommendation; never act autonomously in prod. At window close: append the summary to the report; journey results seed the runtime eval dashboard (Eval Spec, Step 7).
 
-**PRODUCTION failures are NEVER auto-fixed.** Prod finding → report immediately, state rollback recommendation (from deploy-gate's rollback plan), and wait. The fix ships through the full chain.
+## Handoff (signal the orchestrator — never route)
+- **pre-handoff VERIFIED** → cleared for deploy-gate. **FAILED → never advances** — first-run works before the world sees it.
+- **staging VERIFIED** → cleared for deploy-gate's prod-approval step.
+- **prod VERIFIED + clean window** → pipeline complete; findings backlog → brainstorm/eval-spec as future stories.
 
-## Post-Deploy Monitoring Window (prod only)
-
-After a verified prod deploy, monitor for a defined window (default 30 min active, then hand off to platform alerting):
-- Re-poll console/network on the top journey every ~10 min.
-- Watch platform logs (Railway/Vercel/Supabase) for new error signatures.
-- Any new error signature or availability drop → alert the human immediately with the rollback recommendation. Do not act autonomously in prod.
-
-At window close: append monitoring summary to the QA Verify Report and log journey-level results as the first entries in the runtime eval dashboard specified in the Eval Spec (Step 7).
-
-## Handoff
-
-- **VERIFIED (pre-handoff):** signal the orchestrator — journeys + day-0 checklist are green on localhost; the artifact is cleared to proceed to deploy-gate. This is what "the build is ready for a human" means.
-- **VERIFIED (staging):** signal the orchestrator — artifact is cleared for deploy-gate's production approval step.
-- **VERIFIED (prod) + monitoring clean:** pipeline complete. Findings backlog (flags, perf notes) → route to brainstorm/eval-spec as future stories.
-- **FAILED:** report + fix-loop status → orchestrator decides (pre-handoff/staging: loop; prod: human). A failed pre-handoff pass NEVER advances to deploy-gate — first-run has to work before the world sees it.
-
-## Anti-Patterns
-- ❌ "Tests pass, ship it" → ✅ tests validate code; this validates the product. Both required.
-- ❌ Verifying journeys Claude invented → ✅ verify the Eval Spec's journeys; gaps in the spec are eval-spec findings.
-- ❌ Marking a journey passed with console errors → ✅ console-clean is part of pass.
-- ❌ Unbounded fix loops → ✅ 3 per finding, 2 full re-runs, then human.
-- ❌ Auto-fixing production → ✅ prod findings get a rollback recommendation and a human.
-- ❌ Screenshots as decoration → ✅ evidence or it didn't happen: every ✓ has an artifact.
-- ❌ Handing the founder a "done" build verified only by unit tests → ✅ pre-handoff drives the real first-run journey on localhost before any deploy.
-- ❌ "Works once you start the worker / set the key / configure the dashboard" → ✅ every P0 journey works from a clean clone with zero optional infra, or it's a FAIL.
+## Anti-patterns
+- ❌ "Tests pass, ship it" → ✅ tests validate code; this validates the product
+- ❌ Verifying journeys you invented → ✅ the Eval Spec's journeys; gaps are eval-spec findings
+- ❌ Journey "passed" with console errors → ✅ console-clean is part of pass
+- ❌ "Done" because unit tests are green → ✅ pre-handoff drives the real first-run before any deploy
+- ❌ "Works once you start the worker / set the key" → ✅ zero optional infra from a clean clone, or FAIL
+- ❌ Unbounded fix loops → ✅ 3 per finding, 2 full re-runs, then human
+- ❌ Auto-fixing production → ✅ rollback recommendation + a human
+- ❌ Screenshots as decoration → ✅ every ✓ has an artifact
+- ❌ Journey checks that run only when someone remembers → ✅ committed Playwright specs in CI, every deploy, screenshots as artifacts
+- ❌ QA only from pristine state → ✅ dirty fixtures from the failure taxonomy — real accounts are messy
