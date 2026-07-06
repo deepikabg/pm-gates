@@ -1,7 +1,7 @@
 ---
 name: loop-orchestrator
 description: |
-  The single source of truth for the end-to-end autonomous build loop: which gate runs when, what artifact each hands off, where state lives, and where humans must intervene. Use at the START of any build cycle ("build this", "run the loop", "start the pipeline", "new feature", "ship X"), when the user PROVIDES an existing spec/PRD/brief as the input ("build from this spec", "here's my PRD" — this triggers spec-intake, never a full re-interview), when RESUMING work in a repo that contains .pipeline/state.yaml, when the user asks "where are we" / "what's next" / "pipeline status", when the build engine (an autonomous dev loop or a plain Claude Code session) finishes a story/epic and needs routing, or whenever it is unclear which gate applies. Also trigger when any gate completes — this skill routes to the next node. This orchestrator enforces scale-adaptive routing (quick fixes do not run the full ceremony; new systems do), the TDD iron law inside the build phase, fresh-context-per-story execution, and the non-negotiable human hard stops at production deploy, schema migration, and prod incident response. If a build is happening without this skill's state file, the loop is unmanaged — initialize it.
+  The single source of truth for the end-to-end autonomous build loop: which gate runs when, what artifact each hands off, where state lives, and where humans must intervene. Use at the START of any build cycle ("build this", "run the loop", "start the pipeline", "new feature", "ship X"), when the user PROVIDES an existing spec/PRD/brief as the input ("build from this spec", "here's my PRD" — this triggers spec-intake, never a full re-interview), when RESUMING work in a repo that contains .pipeline/state.yaml, when the user asks "where are we" / "what's next" / "pipeline status" / "show me the board" / "break this down into issues", when the build engine (an autonomous dev loop or a plain Claude Code session) finishes a story/epic and needs routing, or whenever it is unclear which gate applies. Also trigger when any gate completes — this skill routes to the next node. This orchestrator enforces scale-adaptive routing (quick fixes do not run the full ceremony; new systems do), the TDD iron law inside the build phase, fresh-context-per-story execution, and the non-negotiable human hard stops at production deploy, schema migration, and prod incident response. If a build is happening without this skill's state file, the loop is unmanaged — initialize it.
 ---
 
 # Loop Orchestrator
@@ -16,7 +16,10 @@ One backbone, one artifact model. This skill defines the holistic end-to-end loo
 | Spec as measurable contract; evals as termination criteria | `eval-spec`, Phase 1 |
 | Runtime eval loop embedded in architecture, not bolted on | `eval-spec` Step 7, verified by `architecture-checkpoint` |
 | Scale-adaptive routing (don't run full ceremony on a bug fix) | Routing levels below |
-| Epics/stories decomposed AFTER architecture is approved | Phase 2 → 3 boundary |
+| Design is approved as a felt artifact, not just documents | `prototype` gate → triad approval |
+| The riskiest assumption is tested before the build commits | `prototype` validation → proceed/pivot/kill |
+| Decomposition is owned, dependency-ordered, and provably covers the spec | `story-map` gate (DAG + traceability) |
+| The human can watch the build plan fill in | `story-map` GitHub Issues/Project projection |
 | Fresh context per story; shard documents, don't stuff context | Build-phase rules |
 | Test-first iron law: no production code without a failing test | Build-phase rules |
 | Real-browser verification, first on localhost before any deploy | `qa-verify` pre-handoff mode |
@@ -28,16 +31,30 @@ One backbone, one artifact model. This skill defines the holistic end-to-end loo
 
 ```
                     ┌─────────────── PHASE 1: DEFINE ───────────────┐
-  idea ──► brainstorm ──► eval-spec ──► architecture-checkpoint
+  idea ──► brainstorm ──► eval-spec ──► prototype
+                            (journeys)    (design prefs → clickable P0 journeys → assumption test)
+                                              │ verdict: validated/invalidated/inconclusive
+                                              │ decision: proceed / pivot(→brainstorm) / kill(→park)
+                                              ▼
+                       ✋ TRIAD APPROVAL — human approves Brief + Eval-Spec + Prototype TOGETHER
                                               │
-                    ┌────────── PHASE 2: CONTRACT ──────────────────┤
+                                              ▼
+                                   architecture-checkpoint
+                                              │
+                    ┌────────── PHASE 2: CONTRACT & DECOMPOSE ──────┤
                     ▼                                               ▼
             api-contract-definition ──────────► security-baseline
+                                                                    │
+                                              spec-readiness check ─┤
+                                                                    ▼
+                          story-map  (epics → story DAG · traceability matrix
+                                      · GitHub Issues/Project view · ✋ human approves the plan)
                                                                     │
                     ┌────────── PHASE 3: BUILD ─────────────────────┤
                     ▼                                               ▼
         [BUILD ENGINE: your autonomous dev loop / Claude Code]
-          stories decomposed from approved architecture
+          executes the story-map DAG in topological order
+          parallel batch stories run in isolated git worktrees
           rules: TDD iron law · fresh context per story · done = tests+evals run & stored · green run = checkpoint
                                                                     │
                     ┌────────── PHASE 4: SHIP & VERIFY ─────────────┤
@@ -73,8 +90,8 @@ Classify the request before running anything:
 
 - **Level 0 — Patch** (typo, copy change, config value): no gates. Fix, test, ship via deploy-gate's staging path. Log one line in state.yaml.
 - **Level 1 — Quick fix** (bug with known root cause, single-story scope): skip Phases 1–2. Write a tech-note (problem, fix, test) into `.pipeline/quick/`, build under TDD rule, then deploy-gate → qa-verify (failed journey only).
-- **Level 2 — Feature** (new capability inside existing architecture): brainstorm-lite (confirm problem + non-goals, ≤10 min), full eval-spec for the feature, skip architecture-checkpoint IF no new services/data stores, then contract deltas → build → ship.
-- **Level 3 — System** (new service, new data store, auth/PII surface change, anything greenfield): the full canonical loop. No skips.
+- **Level 2 — Feature** (new capability inside existing architecture): brainstorm-lite (confirm problem + non-goals, ≤10 min), full eval-spec for the feature, prototype-lite IF user-facing (new/changed screens only, real copy; user validation only if the feature carries the riskiest assumption), skip architecture-checkpoint IF no new services/data stores, then contract deltas → story-map (light — the feature's stories + deps into the existing DAG/board) → build → ship.
+- **Level 3 — System** (new service, new data store, auth/PII surface change, anything greenfield): the full canonical loop — including prototype + triad approval and story-map. No skips (prototype may be skipped only for headless/no-UI systems, noted in state).
 
 If classification is ambiguous → classify UP. Escalation triggers mid-loop (a Level 1 fix turns out to need a schema change) → stop, reclassify, resume at the newly required gate.
 
@@ -89,23 +106,27 @@ Classification measures the *size* of the work; intake measures the *maturity of
 3. **Import what's covered.** A gate whose artifact schema is fully answered by the document → mark it `imported` in state.yaml, recording the source doc path as its artifact and its sha. Never re-run an imported gate unless the source doc changes (hash mismatch — standard invalidation applies).
 4. **Gap-interview what isn't.** Route each gap to its owning gate, which runs in gap-interview mode: only the questions covering the gaps, one at a time, never the full ceremony. The gate then writes a thin artifact (the doc + gap answers) and logs `passed`.
 5. **eval-spec can never be imported by omission.** If the provided document contains no measurable pass/fail criteria, eval-spec runs in full at Levels 2–3 regardless of how complete everything else is — a spec that can't say what "working" measurably means is not build-ready. (A document that genuinely contains eval-grade criteria may import it like any other gate.)
+5b. **prototype imports only as a working artifact.** A provided prototype counts only if it is genuinely clickable and covers the P0 journeys — static mocks or screenshots are a gap, not an import. The assumption-validation verdict and triad approval still run even on an imported prototype.
 6. The pre-Phase-3 spec-readiness check still runs — intake reduces it to a formality rather than replacing it.
 
 Result: "here's my PRD, build it" costs a gap check measured in minutes, and every artifact-model guarantee downstream (qa-verify's journey script, the build engine's definition-of-done, hash invalidation) holds identically for imported and interviewed gates.
 
 ## Phase rules
 
-### Phase 1–2 (Define & Contract)
+### Phase 1–2 (Define, Contract & Decompose)
 - Each gate reads its predecessor's artifact from the path in state.yaml and writes its own artifact + a `passed` entry before the loop advances. No artifact, no advance.
-- Artifact handoffs: brainstorm → `Brainstorm-Brief.md` · eval-spec → `Eval-Spec.md` (journeys + thresholds; this becomes the build's definition-of-done AND qa-verify's script) · architecture-checkpoint → `Architecture.md` · api-contract-definition → `openapi.yaml` / contract files · security-baseline → `Security-Baseline.md`.
+- Artifact handoffs: brainstorm → `Brainstorm-Brief.md` · eval-spec → `Eval-Spec.md` (journeys + thresholds; this becomes the build's definition-of-done AND qa-verify's script) · prototype → `.pipeline/prototype/` + `Prototype-Review.md` (clickable P0 journeys, real copy; qa-verify's expected reference at pre-handoff) · architecture-checkpoint → `Architecture.md` · api-contract-definition → `openapi.yaml` / contract files · security-baseline → `Security-Baseline.md` · story-map → `Story-Map.md` + populated `build.stories`.
+- **Triad approval (human):** after prototype, the human approves **Brief + Eval-Spec + Prototype together** — one moment, three artifacts, recorded in state with all three shas. Any later edit to any of the three invalidates the triad (hash mismatch) → re-approve before advancing. The prototype's assumption-validation verdict (validated/invalidated/inconclusive) and decision (proceed/pivot/kill) are recorded with it; **pivot routes back to brainstorm, kill parks the pipeline** — both are successes of the gate, not failures of the loop.
 - Planning may run in web bundles / flat-rate contexts; only artifacts enter the repo.
-- **Spec-readiness heuristic before Phase 3:** hand the combined artifacts to a fresh Claude instance with no other context and ask it to list every question it would need answered before building. Zero questions = the decision surface is closed and the build may start. Any question = a gap; route it to the owning gate before any story runs.
+- **Spec-readiness heuristic after security-baseline, before story-map:** hand the combined artifacts to a fresh Claude instance with no other context and ask it to list every question it would need answered before building. Zero questions = the decision surface is closed and decomposition may start. Any question = a gap; route it to the owning gate before any story is cut.
+- **Decompose (story-map, the final pre-build node):** the approved artifacts become an epic → story DAG with explicit dependencies, topological batches, a traceability matrix (every P0 journey → stories; every story → eval criteria; holes BLOCK), and — when a remote is configured — a GitHub Issues + Project projection the human can watch. The human approves the plan's shape. state.yaml stays the source of truth; GitHub is the regenerable view.
 
 ### Phase 3 (Build) — rules imposed on ANY engine
 The orchestrator is engine-agnostic — any autonomous dev loop or plain Claude Code session — but the engine must obey:
-1. **Stories come from the approved architecture**, never invented ad hoc. Each story names the Eval-Spec criteria it satisfies.
+1. **Stories come from the approved story-map DAG**, never invented ad hoc. The engine executes batches in topological order; a story whose dependency isn't `done` is not startable. A needed-but-missing story routes back to story-map — the engine may not add stories itself.
 2. **TDD iron law:** a story begins by writing the failing test(s) that encode its acceptance criteria. Production code exists only to make them pass. No test → the story is not startable.
-3. **Fresh context per story.** Workers load: the story, the relevant Architecture/contract shards, and nothing else. Never the full PRD.
+3. **Fresh context per story; worktrees for parallel stories.** Workers load: the story, the relevant Architecture/contract shards, and the prototype screens it implements — nothing else. Never the full PRD. Stories marked `parallel` in the same batch run concurrently **in isolated git worktrees** (no shared-file writes by construction), each merging back on green; anything else serializes.
+3b. **GitHub sync (when projected):** story in-progress → move the card; story done → close the issue (the checkpoint commit references `#<issue>`); parked/red → comment with the ledger entry. state.yaml wins every disagreement — regenerate the view, never reverse-import.
 4. **Story done = evidence, not existence.** A story is `done` only when its tests **and** its named Eval-Spec criteria have been **run in this session** and the results are **recorded** — never merely "tests exist." The engine appends a `test_runs` entry to state.yaml and writes the runner's JSON report to `.pipeline/results/<ts>.json`. "The suite exists / passed once in CI last week" does not close a story.
 5. **Evidence is committed, not gitignored.** `.pipeline/results/` is the audit trail — it is version-controlled. Eval runners write their JSON there; the `test_runs` ledger in state.yaml is append-only (the orchestrator never overwrites prior entries).
 6. **A full-loop integration test per completed phase is mandatory.** Following the pattern proven in distribution-agent, each phase ships a `tests/loop-phase{N}.test.ts` (or the stack's equivalent) that drives the phase end-to-end; the **phase is not `done` until it passes** and its run is in the ledger.
@@ -128,9 +149,11 @@ On any session start in a repo with `.pipeline/state.yaml`:
 ## Human hard stops (the complete list — nothing else stops the loop)
 1. deploy-gate irreversibles (prod deploy, migration, DNS, real money/emails/messages)
 2. qa-verify production findings (rollback decision)
-3. Story budget exhaustion with no completable stories remaining
-4. Mid-loop reclassification to Level 3
-5. Any gate FAILING twice on the same artifact (loop is thrashing → human)
+3. **Triad approval** — Brief + Eval-Spec + Prototype approved together, including the assumption-validation decision (proceed / pivot / kill)
+4. **Story-map plan approval** — the human signs off the build's shape (batches, traceability, board)
+5. Story budget exhaustion with no completable stories remaining
+6. Mid-loop reclassification to Level 3
+7. Any gate FAILING twice on the same artifact (loop is thrashing → human)
 
 Everything else proceeds autonomously. That's the contract: autonomous through staging, human-gated at the irreversible moments.
 
@@ -148,3 +171,7 @@ Everything else proceeds autonomously. That's the contract: autonomous through s
 - ❌ Marking a story done because the test file exists → ✅ tests + named evals run THIS session and recorded in the `test_runs` ledger
 - ❌ A green run left uncommitted, then thrashing to recover it → ✅ green run → checkpoint commit (never secrets, never main)
 - ❌ Trusting a provisional gold set to gate a ship → ✅ stored report carries `ship_gate: NOT BINDABLE` until human-curated
+- ❌ Approving a build from documents alone → ✅ the triad: the human clicks the prototype before architecture hardens anything
+- ❌ Building before the riskiest assumption is tested → ✅ prototype validation first; pivot and kill are cheap here, brutal later
+- ❌ "The engine will figure out the tasks" → ✅ story-map owns decomposition: a DAG, a traceability matrix, an approved plan
+- ❌ A board that's decoration → ✅ traceability makes it trustworthy; sync rules keep it current; state.yaml stays the truth
