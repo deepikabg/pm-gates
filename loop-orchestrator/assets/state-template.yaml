@@ -18,7 +18,7 @@ gates:
     artifact_sha: ""
     passed_at: ""
     design_prefs: {}           # elicited from the user: mood, colors, references, density, mode
-    validation: { method: "", verdict: "", decision: "" }   # verdict: validated|invalidated|inconclusive · decision: proceed|pivot|kill
+    validation: { assumption_class: "", method: "", verdict: "", decision: "" }   # class: valuable|viable|usable|feasible · verdict: validated|invalidated|inconclusive · decision: proceed|pivot|kill
   architecture-checkpoint: { status: pending, artifact: "", artifact_sha: "", passed_at: "" }
   api-contract-definition: { status: pending, artifact: "", artifact_sha: "", passed_at: "" }
   security-baseline:     { status: pending, artifact: "", artifact_sha: "", passed_at: "" }
