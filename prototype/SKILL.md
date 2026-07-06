@@ -64,10 +64,19 @@ Tool-agnostic (static HTML/CSS/JS, Figma, v0 — whatever is fastest to *clickab
 For each key screen: **empty** (first-run, zero data — this mirrors qa-verify's day-0 reality), **loading**, and **error** (use the API contract's error taxonomy once it exists; plain-language messages, no raw codes). Minimal a11y bar: text contrast ≥ 4.5:1, visible focus states, labeled inputs, keyboard-walkable journeys. These aren't polish — they're the states real users hit first.
 
 ### Step 5 — Riskiest-assumption validation (the go / no-go this gate exists for)
-The Brief names the riskiest assumption and its cheapest test. If a prototype can test it (it usually can):
+The Brief names the riskiest assumption **and its class** (valuable / viable / usable / feasible). **Match the test instrument to the class** — a usability walkthrough cannot answer a pricing question:
+
+| Assumption class | Test via this gate | How |
+|---|---|---|
+| **Valuable** (do they want it) | ✅ prototype + fake door | Cold-drive the prototype; end on a real commitment ask (signup, waitlist, "send me access") — measure the ask, not the compliments |
+| **Viable** (will they pay) | ✅ prototype + pricing moment | Put the actual price in the flow (pricing page, fake checkout); the verdict is what they *do* at that screen, not what they *say* about value |
+| **Usable** (can they self-serve) | ✅ prototype cold-drive | Target user completes the P0 journey unnarrated; verdict = task completion, hesitation points |
+| **Feasible** (can the model/tech do it) | ⚠️ NOT a prototype job | Run a **technical spike against the Eval Spec's gold cases** (real inputs, measured pass rate) before architecture. The prototype gate still runs for UX, but the *validation verdict* comes from the spike — clicking through mock screens proves nothing about model reliability |
+
+Then:
 1. Put the prototype in front of **3–5 target users** — or, minimum, the founder driving it cold, no narration.
-2. Script the session around the assumption, not the features: does the user *get it*, *want it*, *do the thing*?
-3. Record the verdict in state.yaml: **validated / invalidated / inconclusive** — with evidence (quotes, observed behavior).
+2. Script the session around the assumption, not the features — using the class-matched instrument above.
+3. Record the verdict in state.yaml with the class: **validated / invalidated / inconclusive** — with evidence (quotes, observed behavior, commitment-ask conversion, spike pass rate).
 4. Decision (human's call, recorded): **proceed** → triad approval · **pivot** → route back to brainstorm with what was learned (this is the cheap bounce the loop exists for) · **kill** → park the project with reasons. A kill here is a *save*, not a failure — name what it cost (a prototype) vs. what it would have cost (the build).
 
 **Inconclusive is not validated.** If the test didn't produce signal, say so and decide knowingly.
