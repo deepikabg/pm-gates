@@ -36,6 +36,8 @@ Split each epic into stories where each story:
 - has a binary done (its tests + named criteria, per Phase 3 rules);
 - gets an id (`S-001`), an iteration budget, and — for UI stories — the prototype screens it implements.
 
+**Always seed two standing infra stories** (early batch, they backstop everything after): the **journey-CI job** (Playwright specs generated from the Eval Spec's journey table, run on every deploy, screenshots uploaded as artifacts — qa-verify's mechanical backstop) and the **dirty-state fixtures** (`tests/fixtures/dirty/`, derived from the Eval Spec's failure taxonomy).
+
 ### Step 3 — Dependencies: build the DAG
 For every story pair, name the edges:
 - **Data deps:** schema before the API that reads it; API before the UI that calls it.
