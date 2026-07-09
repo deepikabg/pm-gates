@@ -165,6 +165,8 @@ Once the contract is approved, write the contract files' paths + a `passed` entr
 
 > "API contract locked and logged to state — handing to the orchestrator for the next gate."
 
+**Log decisions:** versioning/pagination/error-taxonomy choices and any deferred/rejected recommendation → append to `.pipeline/DECISIONS.md` with `Affects:` links, so anything it drifts flips to `stale` (format: loop-orchestrator's Decision Ledger).
+
 ## Anti-Patterns
 - ❌ Designing the contract after the code exists → ✅ contract first, code to the contract
 - ❌ Unversioned endpoints → ✅ explicit version path + deprecation policy from day one
