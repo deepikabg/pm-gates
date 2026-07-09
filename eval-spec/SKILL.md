@@ -151,6 +151,8 @@ For each:
 The Eval Spec is a primary input to **architecture-checkpoint**: the runtime eval loop specified in Step 7 (eval service + feedback path + dashboard + guardrails) must be designed in as a first-class component, not bolted on later. Say:
 > "Eval spec is locked — every feature classified, failure taxonomy built from error analysis, gold set defined, thresholds set, and the runtime eval loop specified. This now feeds Architecture so the eval/feedback service is designed in, not bolted on."
 
+**Log decisions:** any consequential decision, pivot, or deferred/rejected recommendation from this gate → append to `.pipeline/DECISIONS.md` with `Affects:` links, so anything it drifts flips to `stale` (format: loop-orchestrator's Decision Ledger).
+
 ## Anti-Patterns
 - ❌ Top-down generic metrics (latency, token count) as your evals → ✅ error-analysis-first, derived from real failures
 - ❌ Fuzzy evals on deterministic features / pass-fail on probabilistic ones → ✅ classify first, right instrument per bucket
