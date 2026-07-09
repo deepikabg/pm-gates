@@ -96,6 +96,8 @@ Stories land in `state.yaml → build.stories` with `depends_on`, `batch`, `para
 ## Handoff
 Write Story-Map.md + `passed` + the populated stories to `.pipeline/state.yaml`, then **signal loop-orchestrator — it owns routing; this skill never chooses the next gate.** (Per the orchestrator's rules, the build engine starts Batch 1 next, executing the DAG in topological order.)
 
+**Log decisions:** scope cuts, story re-cuts, sequencing calls, and any deferred/rejected recommendation → append to `.pipeline/DECISIONS.md` with `Affects:` links, so anything it drifts flips to `stale` (format: loop-orchestrator's Decision Ledger).
+
 ## Anti-Patterns
 - ❌ The engine inventing stories mid-build → ✅ stories come from this gate only; a needed-but-missing story routes back here
 - ❌ A story list with no dependency edges → ✅ a DAG with named data/file/setup deps, executed in topological order
