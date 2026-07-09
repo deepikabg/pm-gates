@@ -156,6 +156,8 @@ Once the architecture is approved, write `Architecture.md` + a `passed` entry to
 Say, e.g.:
 > "Architecture approved — and since it's AI-native, I confirmed the eval/feedback service is a first-class component per the eval spec. Logged to state — handing to the orchestrator for the next gate."
 
+**Log decisions:** every named trade-off, alternative rejected, and deferred/rejected recommendation → append to `.pipeline/DECISIONS.md` with `Affects:` links, so anything it drifts flips to `stale` (format: loop-orchestrator's Decision Ledger). Architecture decisions are the highest-value entries in the ledger — this is where ADRs live.
+
 ## Anti-Patterns
 - ❌ Choices with no rationale → ✅ every choice tied to a stated constraint
 - ❌ One option presented as the answer → ✅ alternatives named with pros/cons and why the winner won
