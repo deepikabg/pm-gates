@@ -25,6 +25,8 @@ One backbone, one artifact model. This skill defines the holistic end-to-end loo
 | Real-browser verification, first on localhost before any deploy | `qa-verify` pre-handoff mode |
 | A phase closes only on stored test + eval evidence | Phase 3 rules 4–7 · `test_runs` ledger |
 | Every green run is a recoverable git checkpoint | Phase 3 rule 8 |
+| Every consequential decision + recommendation is logged, with what it drifts | `DECISIONS.md` ledger + `stale` status |
+| Stale specs are refreshed by replaying decisions, not rewritten from memory | Decision-ledger refresh flow |
 | Irreversible actions always stop for a human | `deploy-gate` hard stops |
 
 ## The Canonical Loop
@@ -80,9 +82,31 @@ One backbone, one artifact model. This skill defines the holistic end-to-end loo
    consult the loop-orchestrator skill and read .pipeline/state.yaml.
    Never deploy to prod or run migrations without deploy-gate approval.
    ```
-3. **`.pipeline/state.yaml` in the repo** — the memory: which gates passed, artifact paths, approvals. Context windows die; this file is how any future session (or parallel worker) knows exactly where the loop stands. Template: see `assets/state-template.yaml` in this skill.
+3. **`.pipeline/state.yaml` in the repo** — the *status*: which gates passed, artifact paths, hashes, approvals. Context windows die; this file is how any future session (or parallel worker) knows exactly where the loop stands. Template: see `assets/state-template.yaml` in this skill.
+4. **`.pipeline/DECISIONS.md` in the repo** — the *why*: the append-only rationale/drift ledger (see the next section). state.yaml says what state we're in; the artifacts say what the spec currently is; this says why it says that and how it has drifted.
 
-Logic in the skill, declaration in CLAUDE.md, state in the repo. All three or the loop is unmanaged.
+Logic in the skill, declaration in CLAUDE.md, status in state.yaml, rationale in DECISIONS.md. All four or the loop is unmanaged.
+
+## The Decision Ledger (`.pipeline/DECISIONS.md`)
+
+The three memory layers divide cleanly: **artifacts** are the *current* spec, **state.yaml** is the *status*, and this ledger is the ***why***. It is append-only, it sits *beside* the artifacts (it does not replace them), and it is what turns "refresh the eval spec" from an archaeology dig into a mechanical replay. Without it, pivots and trade-offs made during build and test live in commit messages and dead chat threads, and the design artifacts silently rot while the code moves on.
+
+**Who writes:** every gate and the human append; this skill owns the format. **When (the bar — keep it from becoming noise):** log a decision only if it changes an artifact, pivots scope, accepts a named trade-off, or defers/rejects a recommendation — NOT routine implementation choices the spec already covers (same discipline as "don't write an eval for a one-line fix").
+
+**Entry format:**
+```markdown
+## D-014 · [gate/phase] · [ISO date] · status: accepted
+Decision: [what was decided]
+Trigger: [qa-verify finding / build discovery / prototype pivot / user ask / Claude recommendation]
+Rationale + alternatives: [why this; what else was weighed]
+Affects: [Eval-Spec ✎stale · Architecture]     Decided by: [human/claude] · approved: [y/n]
+Supersedes: [D-009 or —]
+```
+
+- **status:** `proposed | accepted | deferred | rejected | superseded | applied`. **Recommendations are first-class entries** — a deferred recommendation IS the backlog; a rejected one is settled *with its reason*, so it is never silently re-litigated.
+- **`Affects:` drives drift.** Any artifact named there flips to `stale` in state.yaml, tagged with the decision id. "What has drifted, and why?" becomes a query, not a memory test.
+
+**Refresh flow (why the ledger earns its keep):** to refresh a stale artifact — gather its open (`accepted`, not-yet-`applied`) decisions from the ledger → regenerate the artifact incorporating them → mark those decisions `applied` → re-hash the artifact. The hash change re-invalidates downstream gates through the normal mechanism. **Refresh is replay, not rewrite** — the ledger is the reason a months-long, many-pivot project can still produce a current, trustworthy Brief/Eval-Spec/Architecture on demand.
 
 ## Scale-Adaptive Routing (run FIRST, every time)
 
@@ -144,7 +168,7 @@ The orchestrator is engine-agnostic — any autonomous dev loop or plain Claude 
 
 ## Resumption protocol
 On any session start in a repo with `.pipeline/state.yaml`:
-1. Read state.yaml. 2. Report: level, last passed gate, pending approvals, parked stories. 3. Resume at the first incomplete node. Never re-run passed gates unless their input artifact changed (hash mismatch) — then invalidate downstream and re-run from there.
+1. Read state.yaml **and skim recent `DECISIONS.md` entries**. 2. Report: level, last passed gate, pending approvals, parked stories, **and any `stale` artifacts with the decisions that drifted them**. 3. Resume at the first incomplete node. Never re-run passed gates unless their input artifact changed (hash mismatch) — then invalidate downstream and re-run from there. A `stale` artifact is refreshed by replaying its open decisions (see the Decision Ledger), not rebuilt from scratch.
 
 ## Human hard stops (the complete list — nothing else stops the loop)
 1. deploy-gate irreversibles (prod deploy, migration, DNS, real money/emails/messages)
@@ -175,3 +199,7 @@ Everything else proceeds autonomously. That's the contract: autonomous through s
 - ❌ Building before the riskiest assumption is tested → ✅ prototype validation first; pivot and kill are cheap here, brutal later
 - ❌ "The engine will figure out the tasks" → ✅ story-map owns decomposition: a DAG, a traceability matrix, an approved plan
 - ❌ A board that's decoration → ✅ traceability makes it trustworthy; sync rules keep it current; state.yaml stays the truth
+- ❌ Decisions and pivots buried in commit messages and dead chat threads → ✅ one append-only DECISIONS.md with what each drifts
+- ❌ Design artifacts silently rotting while the build moves on → ✅ `Affects:` flips them `stale`; refresh replays the decisions
+- ❌ Re-litigating a settled call, or losing a deferred idea → ✅ recommendations logged with status (deferred = backlog, rejected = settled with reason)
+- ❌ Logging every trivial choice until the ledger is noise → ✅ only consequential decisions; the spec already covers the routine
