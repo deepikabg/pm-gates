@@ -84,6 +84,8 @@ Re-poll the top journey ~every 10 min · watch platform logs for new error signa
 - **staging VERIFIED** → cleared for deploy-gate's prod-approval step.
 - **prod VERIFIED + clean window** → pipeline complete; findings backlog → brainstorm/eval-spec as future stories.
 
+**Log decisions:** a finding that forces a spec/copy/scope change, or a deferred fix → append to `.pipeline/DECISIONS.md` with `Affects:` links, so the drifted artifact flips to `stale` (format: loop-orchestrator's Decision Ledger). This is the main path by which build/test reality flows back to the design artifacts.
+
 ## Anti-patterns
 - ❌ "Tests pass, ship it" → ✅ tests validate code; this validates the product
 - ❌ Verifying journeys you invented → ✅ the Eval Spec's journeys; gaps are eval-spec findings
