@@ -115,6 +115,8 @@ Artifact: [commit/branch]   Target: [platform / env]
 
 This gate's job ends when the deploy command succeeds. Verification of the *running product* belongs to `qa-verify` — the chain is complete only when its prod monitoring window closes clean. Ongoing findings feed back through the eval/feedback loop, not through re-running this gate.
 
+**Log decisions:** every irreversible-action approval (who approved, rollback plan) and any accepted-risk override → append to `.pipeline/DECISIONS.md` (format: loop-orchestrator's Decision Ledger). A prod-deploy approval is the single most important entry to keep — it's the record of who said yes.
+
 ## Anti-Patterns
 - ❌ Trusting the design-time security check to cover the shipped code → ✅ re-scan the actual artifact
 - ❌ Letting "don't ask permissions" auto-approve a prod deploy or migration → ✅ those always hard-stop
