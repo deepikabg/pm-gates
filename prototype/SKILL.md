@@ -107,6 +107,8 @@ Notes: [...]
 ## Handoff
 Write the Prototype Review + `passed` (with the triad block) to `.pipeline/state.yaml`, then **signal loop-orchestrator — it owns routing; this skill never chooses the next gate.** (Per the orchestrator's rules, architecture-checkpoint runs next on proceed; pivot routes back to brainstorm; kill parks the pipeline.)
 
+**Log decisions:** the proceed/pivot/kill call, any design-direction choice, and any deferred/rejected recommendation → append to `.pipeline/DECISIONS.md` with `Affects:` links, so anything it drifts flips to `stale` (format: loop-orchestrator's Decision Ledger).
+
 ## Anti-Patterns
 - ❌ Lorem ipsum / placeholder copy → ✅ real words; copy is a product decision needing approval
 - ❌ Happy-path-only screens → ✅ empty, loading, and error states — the states day-0 users actually hit
