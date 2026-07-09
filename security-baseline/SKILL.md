@@ -100,6 +100,8 @@ The security baseline is the final *design* gate. Once the PM (plus Security/Leg
 **All design specs are now locked: MVP scope (brainstorm) → eval spec → prototype (triad-approved) → architecture → [API contract] → security baseline.** Say, e.g.:
 > "Security baseline approved — the full design chain is locked and logged to state. Handing to the orchestrator: next is the spec-readiness check, then story-map breaks this into the dependency-ordered build plan for your approval."
 
+**Log decisions:** accepted risks, compliance-scope calls, and any deferred/rejected recommendation → append to `.pipeline/DECISIONS.md` with `Affects:` links, so anything it drifts flips to `stale` (format: loop-orchestrator's Decision Ledger). An accepted-risk entry is the audit trail for why a known gap shipped.
+
 During the build, the remaining quality gates (test strategy, self code review) run as human-on-the-loop checks — Claude proposes, you spot-check — not as blocking design gates.
 
 **Important — this is a DESIGN-time gate. It validated the plan, not the shipped code.** Before anything is deployed, migrated, or made public, the **deploy-gate** skill must run: it re-scans the actual built artifact for leaked secrets/PII/exposed endpoints, audits the installed dependency tree, and hard-stops for explicit human approval on irreversible actions (production deploy, schema migration) — even in bypass-permissions mode. Tell the user:
