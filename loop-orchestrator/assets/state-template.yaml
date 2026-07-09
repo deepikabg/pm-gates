@@ -35,10 +35,12 @@ gates:
     pre_handoff: { status: pending, target: "localhost", report: "", verdict: "", day0_checklist: "" }  # first-run gate — runs BEFORE deploy-gate, no deploy
     staging:     { status: pending, report: "", verdict: "" }
     prod:        { status: pending, report: "", verdict: "", monitoring_window_end: "" }
-  # status: pending | in-progress | passed | failed | skipped(level-N) | imported
+  # status: pending | in-progress | passed | failed | skipped(level-N) | imported | stale
   # imported = gate satisfied by a user-provided spec via loop-orchestrator's spec-intake:
   #   artifact = source doc path, artifact_sha = its hash (standard invalidation applies).
   #   eval-spec may only be imported if the doc contains measurable pass/fail criteria.
+  # stale = artifact was `passed` but a DECISIONS.md entry has drifted it. Add stale_because: [D-0xx]
+  #   to the gate and refresh by REPLAYING those decisions (not rewriting) before relying on it.
 
 triad_approval:            # Brief + Eval-Spec + Prototype approved TOGETHER by the human
   approved: false
@@ -94,3 +96,6 @@ approvals: []
 
 parked: []                # stories or findings awaiting human direction
 perf_baseline: ".pipeline/perf-baseline.json"
+decisions: ".pipeline/DECISIONS.md"   # append-only rationale/drift ledger (the "why" layer).
+                                      # Log consequential decisions + deferred/rejected recommendations here;
+                                      # a decision's Affects: links flip the named gate's artifact to `stale`.
