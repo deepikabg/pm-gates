@@ -94,6 +94,14 @@ Test-first story execution, fresh context per story, scale-adaptive routing, bro
 
 ## Changelog
 
+### v1.3 — *the decision ledger: specs stay honest across pivots*
+
+Adds the missing "why" layer. Artifacts are the *current* spec and `state.yaml` is the *status*, but until now nothing recorded **why** a spec changed or captured decisions made during build and test — so pivots lived in commit messages and the design artifacts silently went stale.
+
+- **`.pipeline/DECISIONS.md` (new)** — an append-only rationale/drift ledger, beside the artifacts (not replacing them). Every gate and the human log consequential decisions, pivots, and trade-offs — and **recommendations are first-class entries** (a deferred one is the backlog; a rejected one is settled *with its reason*, never silently re-litigated). Each entry's `Affects:` links flip the artifacts it drifts to a new **`stale`** status in state.yaml. "What's drifted, and why?" becomes a query, not a memory test.
+- **Refresh is replay, not rewrite** — regenerating a stale Brief / Eval-Spec / Architecture means gathering its open decisions from the ledger, applying them, and re-hashing (which re-invalidates downstream through the normal mechanism). This is what lets a months-long, many-pivot project still produce a current, trustworthy spec on demand.
+- **`qa-verify` is the main back-propagation path** — a finding that forces a copy/scope/spec change logs a decision that flips the design artifact `stale`, so build/test reality flows back to the design instead of the two drifting apart.
+
 ### v1.2 — *approve what you'll feel, not just what you'll read; build from a traced plan, not a vibe*
 
 Closes the two weakest links: design was approved as documents only, and the plan→build handoff ("break it down into tasks") had no owner.
