@@ -201,6 +201,8 @@ Positioning (one line): [...]   Voice: [3 adjectives]   Key message: [...]
 ## Handoff
 The Brief's **MVP** + **constraints** + **Decision Surface** feed the next gate. Write the Brief's path + a `passed` entry to `.pipeline/state.yaml`, then **signal loop-orchestrator — it owns routing; this skill never chooses the next gate.** (Per the orchestrator's rules, eval-spec runs next at Levels 2–3 — if you can't write the eval, the problem isn't clear enough to build, which bounces cheaply back here.) Say: *"Brief is locked and logged to state — handing to the orchestrator for the next gate."*
 
+**Log decisions:** any consequential decision, pivot, or deferred/rejected recommendation from this gate → append to `.pipeline/DECISIONS.md` with `Affects:` links, so anything it drifts flips to `stale` (format: loop-orchestrator's Decision Ledger).
+
 ## Anti-Patterns
 - ❌ Dumping all questions at once → ✅ one at a time, think out loud
 - ❌ Accepting the first solution → ✅ frame it back as a problem (GOLD)
