@@ -148,8 +148,8 @@ For each:
 
 ## Handoff
 
-The Eval Spec is a primary input to **architecture-checkpoint**: the runtime eval loop specified in Step 7 (eval service + feedback path + dashboard + guardrails) must be designed in as a first-class component, not bolted on later. Say:
-> "Eval spec is locked — every feature classified, failure taxonomy built from error analysis, gold set defined, thresholds set, and the runtime eval loop specified. This now feeds Architecture so the eval/feedback service is designed in, not bolted on."
+Write `Eval-Spec.md` + a `passed` entry to `.pipeline/state.yaml`, then **signal loop-orchestrator — it owns routing; this skill never chooses the next gate.** (Per the orchestrator's rules, **prototype** runs next — the journeys defined here become its clickable screens — and this spec remains a primary input to **architecture-checkpoint**: the runtime eval loop from Step 7, eval service + feedback path + dashboard + guardrails, must be designed in as a first-class component, not bolted on later.) Say:
+> "Eval spec is locked — every feature classified, failure taxonomy built from error analysis, gold set defined, thresholds set, and the runtime eval loop specified. Logged to state — handing to the orchestrator. Next these journeys become a clickable prototype, and Architecture must design the eval loop in."
 
 **Log decisions:** any consequential decision, pivot, or deferred/rejected recommendation from this gate → append to `.pipeline/DECISIONS.md` with `Affects:` links, so anything it drifts flips to `stale` (format: loop-orchestrator's Decision Ledger).
 
