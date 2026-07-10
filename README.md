@@ -4,13 +4,15 @@
 
 The popular approaches to autonomous building all constrain the *engineer* side — code discipline, context hygiene, role separation. None of them answer the product questions: *Is this the right thing to build? How will we know it works? What must never happen without a human?*
 
-pm-gates is that layer: ten connected gates that run across the lifecycle of any build, from "I have an idea" to "this is verified in production." They keep the work honest about what problem we're solving, what "good" measurably means, how it should feel, whether the architecture holds, and whether it's safe to ship.
+pm-gates is that layer: eleven connected gates that run across the lifecycle of any build, from "I have an idea" to "this is verified in production." They keep the work honest about what problem we're solving, whether the market already solved it, what "good" measurably means, how it should feel, whether the architecture holds, and whether it's safe to ship.
 
 It's a methodology made executable — each gate encodes the judgment a product lead brings to one moment of a build, so an autonomous engine (or a plain Claude Code session) can move fast without shipping the wrong thing, an unmeasurable thing, or an unsafe thing. It is not a product with a user base; it's a working theory of the AI-native PM's job. The sharpest gates were written *after* real build cycles exposed what a clean spec and green tests still miss — the pre-handoff gate exists because a build passed every design check and 56/56 tests, then broke for its first user in five minutes (the changelog traces each such lesson).
 
 ```
-DEFINE     brainstorm → eval-spec → prototype
-             (design prefs → clickable P0 journeys with real copy → riskiest-assumption test)
+DEFINE     brainstorm → market-scan → eval-spec → prototype
+             (market-scan: recon existence-check at idea time · landscape + competitor
+              teardowns → wedge verdict · no wedge = ✋ proceed/pivot/kill, cheapest kill in the loop)
+             (prototype: design prefs → clickable P0 journeys with real copy → riskiest-assumption test)
              ✋ TRIAD APPROVAL — human approves Brief + Eval-Spec + Prototype together
              decision: proceed / pivot(→brainstorm) / kill(→park)
            → architecture-checkpoint
@@ -33,7 +35,8 @@ VERIFY     qa-verify    (staging → prod · real browser · bounded fix loop ·
 | Skill | When it fires | What it does |
 |---|---|---|
 | `loop-orchestrator` | Start of any build cycle; on resume; whenever routing is unclear | Owns the end-to-end loop: scale-adaptive routing (Levels 0–3), phase rules, `.pipeline/state.yaml`, human hard stops |
-| `brainstorm` | Start of any new product/feature/"I want to build X" | Gated discovery interview. Goal → prioritized problem → decision surface → true MVP. Produces a Brainstorm Brief |
+| `brainstorm` | Start of any new product/feature/"I want to build X" | Gated discovery interview. Goal (OKR-shaped) → prioritized problem → decision surface → true MVP. Produces a Brainstorm Brief |
+| `market-scan` | Recon at idea time; full scan after the Brief locks segment + JTBD | Cited market landscape: competitor anatomy (moat/vulnerability/monetization), onboarding teardowns, table stakes vs. differentiators → a **wedge verdict**; *no wedge* is a human proceed/pivot/kill — the cheapest kill in the loop. Fills the Brief's Market & Differentiator section; expires (~90 days) |
 | `eval-spec` | After MVP scope locks, before/alongside architecture | Turns "what good looks like" into measurable pass/fail contracts: deterministic tests vs. probabilistic evals vs. guardrails, gold datasets, ship/no-ship thresholds |
 | `prototype` | After eval-spec, before architecture (user-facing builds) | Elicits design preferences, makes the P0 journeys clickable with real copy + empty/error/loading states, tests the riskiest assumption (go/pivot/kill), and runs the **triad approval**: Brief + Eval-Spec + Prototype approved together |
 | `architecture-checkpoint` | Before proposing a system design or major change | Validates architecture against PM constraints: scalability, DB/cache, error handling, observability, cost, explicit trade-offs |
@@ -93,6 +96,14 @@ Each skill directory at the repo root is auto-discovered by Claude Code from `~/
 Test-first story execution, fresh context per story, scale-adaptive routing, browser-verified shipping with a bounded fix loop, and evals as the spine from spec to verification. Autonomous through staging, human-gated at the irreversible moments. One backbone, one artifact model.
 
 ## Changelog
+
+### v1.4 — *no build without the landscape: the wedge is named before specs harden*
+
+Closes the market blind spot: the loop could previously carry an idea all the way to prototype without once asking whether a mature product already does this.
+
+- **`market-scan` gate (new)** — two passes, deliberately: a **recon** existence check at brainstorm's Gate 0 (minutes: "does a dominant/free incumbent already do exactly this?") and a **full scan** after the Brief locks segment + JTBD (a deep scan before the problem is framed researches the wrong market — brainstorm's reframing decides what market this actually is). The full scan is analyst-grade and honest by law: every claim sourced, empty-beats-invented, onboarding **teardowns** of the top competitors (not website reads), private companies mapped to their nearest public comparable, and a hard `valid_until` (~90 days) after which the scan flips `stale`.
+- **The wedge verdict is a new human hard stop** — `clear wedge / contested / no wedge`; *no wedge* stops for an explicit proceed / pivot / kill, making this the cheapest kill in the loop: research-priced, before anything is built.
+- **The Brief stays the one product spec** — it gains a **Market & Differentiator** section (competitor table, table stakes, the wedge and why it isn't trivially copyable) filled by the scan, and its Goal & Metric is now explicitly **OKR-shaped** (Objective / Key Result / driver KPIs). Definition-of-done stays in eval-spec, deliberately — the Brief says what and why; the Eval Spec says what done measurably means.
 
 ### v1.3 — *the decision ledger: specs stay honest across pivots*
 
