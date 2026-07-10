@@ -45,7 +45,9 @@ Ask clarifying questions first; narrow the scope before exploring. (Give a heads
 - > "Any constraints I should keep in mind up front — team size, timeline, budget, regulatory, tech you're tied to?"
 - For a strategy/0-to-1 framing, surface the **three components that matter most** before anything else. Example: for an apartment-hunting app, the three that most determine success are **business model, competition, and user segment** — name those before any solution. Name the analogous three for *this* idea.
 
-**Gate check:** You know whether this is explore-wide or pressure-test, the hard constraints, and the 2–3 components that will most determine success.
+**Market recon (new-product builds):** the orchestrator runs `market-scan` in RECON mode here — a minutes-long, sourced existence check: *does a mature, dominant, or free product already do exactly this?* A hit goes on the table now ("X exists — what's genuinely different about your situation?"), not after the Brief is written. The deep landscape scan deliberately waits until after this interview locks segment + JTBD — scanning the solution category before the problem is framed researches the wrong market.
+
+**Gate check:** You know whether this is explore-wide or pressure-test, the hard constraints, the 2–3 components that will most determine success, and (new product) whether an obvious incumbent already owns this.
 
 ---
 
@@ -69,7 +71,7 @@ Separate the *outcome* from the *thing*. (Define goal and metrics **before** ans
 1. > "What's the problem? Describe the moment it actually bites — when, where, who's feeling it."
 2. > "If you do nothing, what happens — who's hurt, how badly?" *(painkiller vs. vitamin)*
 3. > "Is this one problem or several? List them — then if you could fix only ONE this month, which unlocks the most, and why is it materially more important than the rest?" *(Customer Problems Stack Rank — it's not enough that you solve a problem; you must know where it ranks.)*
-4. > "What do people do today instead?" *(the alternative / workaround)*
+4. > "What do people do today instead?" *(the alternative / workaround — fold in the recon findings: named incumbents count as "today instead", not just manual workarounds)*
 
 **Move B — Decompose the decision surface (ONLY if the system is AI-native: agents, RAG, anything making probabilistic decisions).** This is where "build a chatbot" becomes "triage, flag, and route." Ask, one at a time:
 1. > "What decisions is this system actually making? Name them as decisions, not features." *(e.g., 'is this claim complete?', 'route to which review path?')*
@@ -148,8 +150,10 @@ This single question kills the "overcomplicating features for no reason" failure
 # Brainstorm Brief: [Project Name]
 Date: [date] | Type: [open-ended / pressure-test] | AI-native: [yes/no]
 
-## Goal & Metric
-[Outcome] for [someone], measured by [primary metric].
+## Goal & Metric (OKR-shaped)
+Objective: [the outcome] for [someone]
+Key Result: [the one primary metric + target]
+Driver KPIs (the metric's issue tree): [...]
 Why now / opportunity cost: [...]  Second-order effects: [...]
 
 ## Top-3 Components That Decide Success
@@ -168,6 +172,14 @@ Deprioritized (parked): [...]
 Who: [specific segment]
 Job: When I [situation], I want to [motivation], so I can [outcome].
 Journey + painpoints: [...]   Segment bet: [existing / new]
+
+## Market & Differentiator  (filled by market-scan; evidence: Market-Landscape.md)
+| Competitor | Segment | Moat | Vulnerability |
+|---|---|---|---|
+Status-quo alternative (always a competitor): [...]
+Table stakes we must match: [...]
+**Wedge** (one line + why not trivially copyable): [...]
+Verdict: [clear wedge / contested / no wedge → human proceed/pivot/kill]
 
 ## Riskiest Assumption
 [The one thing that must be true. MVP exists to test THIS.]
