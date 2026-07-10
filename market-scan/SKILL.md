@@ -24,6 +24,8 @@ Your taste serves the rules below; where judgment and a written rule conflict, *
 
 **FULL SCAN — after brainstorm locks segment + JTBD.** The scan targets *alternatives to this job for this segment*, never a generic solution-category listicle — brainstorm's reframing decides what market this actually is.
 
+**Invoked directly as the entry point** (only an idea, no Brief in state — e.g., "is this space crowded?"): run RECON on the stated idea, report the findings, then signal the orchestrator — it routes to brainstorm next. Never fake a full scan on an unframed idea; the deep pass waits for the locked segment + JTBD. The user never has to know the sequence — any entry point self-corrects.
+
 ## The full scan → `Market-Landscape.md`
 
 1. **Market context** — size/growth (sourced), the 2–3 trends, regulatory or technology shifts that matter to this JTBD.
