@@ -13,6 +13,7 @@ One backbone, one artifact model. This skill defines the holistic end-to-end loo
 | Principle | Where it lives here |
 |---|---|
 | Hard pushback on framing before anything is built | `brainstorm` gate |
+| No build without the landscape; the wedge is named before specs harden | `market-scan` (recon + full, no-wedge human stop) |
 | Spec as measurable contract; evals as termination criteria | `eval-spec`, Phase 1 |
 | Runtime eval loop embedded in architecture, not bolted on | `eval-spec` Step 7, verified by `architecture-checkpoint` |
 | Scale-adaptive routing (don't run full ceremony on a bug fix) | Routing levels below |
@@ -33,8 +34,12 @@ One backbone, one artifact model. This skill defines the holistic end-to-end loo
 
 ```
                     ┌─────────────── PHASE 1: DEFINE ───────────────┐
-  idea ──► brainstorm ──► eval-spec ──► prototype
-                            (journeys)    (design prefs → clickable P0 journeys → assumption test)
+  idea ──► brainstorm ──► market-scan ──► eval-spec ──► prototype
+           (+ market-scan   (landscape + teardowns       (journeys)    (design prefs → clickable P0 journeys → assumption test)
+            RECON at Gate 0) → wedge verdict, fills
+                             Brief's differentiator;
+                             no wedge = ✋ proceed/pivot/kill —
+                             the cheapest kill in the loop)
                                               │ verdict: validated/invalidated/inconclusive
                                               │ decision: proceed / pivot(→brainstorm) / kill(→park)
                                               ▼
@@ -114,8 +119,8 @@ Classify the request before running anything:
 
 - **Level 0 — Patch** (typo, copy change, config value): no gates. Fix, test, ship via deploy-gate's staging path. Log one line in state.yaml.
 - **Level 1 — Quick fix** (bug with known root cause, single-story scope): skip Phases 1–2. Write a tech-note (problem, fix, test) into `.pipeline/quick/`, build under TDD rule, then deploy-gate → qa-verify (failed journey only).
-- **Level 2 — Feature** (new capability inside existing architecture): brainstorm-lite (confirm problem + non-goals, ≤10 min), full eval-spec for the feature, prototype-lite IF user-facing (new/changed screens only, real copy; user validation only if the feature carries the riskiest assumption), skip architecture-checkpoint IF no new services/data stores, then contract deltas → story-map (light — the feature's stories + deps into the existing DAG/board) → build → ship.
-- **Level 3 — System** (new service, new data store, auth/PII surface change, anything greenfield): the full canonical loop — including prototype + triad approval and story-map. No skips (prototype may be skipped only for headless/no-UI systems, noted in state).
+- **Level 2 — Feature** (new capability inside existing architecture): brainstorm-lite (confirm problem + non-goals, ≤10 min), market-scan parity check (do competitors have this feature? table stakes or differentiator — one page max), full eval-spec for the feature, prototype-lite IF user-facing (new/changed screens only, real copy; user validation only if the feature carries the riskiest assumption), skip architecture-checkpoint IF no new services/data stores, then contract deltas → story-map (light — the feature's stories + deps into the existing DAG/board) → build → ship.
+- **Level 3 — System** (new service, new data store, auth/PII surface change, anything greenfield): the full canonical loop — including market-scan (recon at Gate 0 + full scan), prototype + triad approval, and story-map. No skips (prototype may be skipped only for headless/no-UI systems, noted in state).
 
 If classification is ambiguous → classify UP. Escalation triggers mid-loop (a Level 1 fix turns out to need a schema change) → stop, reclassify, resume at the newly required gate.
 
@@ -139,7 +144,7 @@ Result: "here's my PRD, build it" costs a gap check measured in minutes, and eve
 
 ### Phase 1–2 (Define, Contract & Decompose)
 - Each gate reads its predecessor's artifact from the path in state.yaml and writes its own artifact + a `passed` entry before the loop advances. No artifact, no advance.
-- Artifact handoffs: brainstorm → `Brainstorm-Brief.md` · eval-spec → `Eval-Spec.md` (journeys + thresholds; this becomes the build's definition-of-done AND qa-verify's script) · prototype → `.pipeline/prototype/` + `Prototype-Review.md` (clickable P0 journeys, real copy; qa-verify's expected reference at pre-handoff) · architecture-checkpoint → `Architecture.md` · api-contract-definition → `openapi.yaml` / contract files · security-baseline → `Security-Baseline.md` · story-map → `Story-Map.md` + populated `build.stories`.
+- Artifact handoffs: brainstorm → `Brainstorm-Brief.md` · market-scan → `Market-Landscape.md` (cited, `valid_until` ~90 days; it also fills the Brief's Market & Differentiator section and re-hashes both) · eval-spec → `Eval-Spec.md` (journeys + thresholds; this becomes the build's definition-of-done AND qa-verify's script) · prototype → `.pipeline/prototype/` + `Prototype-Review.md` (clickable P0 journeys, real copy; qa-verify's expected reference at pre-handoff) · architecture-checkpoint → `Architecture.md` · api-contract-definition → `openapi.yaml` / contract files · security-baseline → `Security-Baseline.md` · story-map → `Story-Map.md` + populated `build.stories`.
 - **Triad approval (human):** after prototype, the human approves **Brief + Eval-Spec + Prototype together** — one moment, three artifacts, recorded in state with all three shas. Any later edit to any of the three invalidates the triad (hash mismatch) → re-approve before advancing. The prototype's assumption-validation verdict (validated/invalidated/inconclusive) and decision (proceed/pivot/kill) are recorded with it; **pivot routes back to brainstorm, kill parks the pipeline** — both are successes of the gate, not failures of the loop.
 - Planning may run in web bundles / flat-rate contexts; only artifacts enter the repo.
 - **Spec-readiness heuristic after security-baseline, before story-map:** hand the combined artifacts to a fresh Claude instance with no other context and ask it to list every question it would need answered before building. Zero questions = the decision surface is closed and decomposition may start. Any question = a gap; route it to the owning gate before any story is cut.
@@ -173,11 +178,12 @@ On any session start in a repo with `.pipeline/state.yaml`:
 ## Human hard stops (the complete list — nothing else stops the loop)
 1. deploy-gate irreversibles (prod deploy, migration, DNS, real money/emails/messages)
 2. qa-verify production findings (rollback decision)
-3. **Triad approval** — Brief + Eval-Spec + Prototype approved together, including the assumption-validation decision (proceed / pivot / kill)
-4. **Story-map plan approval** — the human signs off the build's shape (batches, traceability, board)
-5. Story budget exhaustion with no completable stories remaining
-6. Mid-loop reclassification to Level 3
-7. Any gate FAILING twice on the same artifact (loop is thrashing → human)
+3. **Market-scan no-wedge verdict** — proceed / pivot / kill, decided by the human; the cheapest kill in the loop (research-priced, pre-build)
+4. **Triad approval** — Brief + Eval-Spec + Prototype approved together, including the assumption-validation decision (proceed / pivot / kill)
+5. **Story-map plan approval** — the human signs off the build's shape (batches, traceability, board)
+6. Story budget exhaustion with no completable stories remaining
+7. Mid-loop reclassification to Level 3
+8. Any gate FAILING twice on the same artifact (loop is thrashing → human)
 
 Everything else proceeds autonomously. That's the contract: autonomous through staging, human-gated at the irreversible moments.
 
@@ -203,3 +209,6 @@ Everything else proceeds autonomously. That's the contract: autonomous through s
 - ❌ Design artifacts silently rotting while the build moves on → ✅ `Affects:` flips them `stale`; refresh replays the decisions
 - ❌ Re-litigating a settled call, or losing a deferred idea → ✅ recommendations logged with status (deferred = backlog, rejected = settled with reason)
 - ❌ Logging every trivial choice until the ledger is noise → ✅ only consequential decisions; the spec already covers the routine
+- ❌ Building without once looking at the market → ✅ recon at idea time; full landscape scan before specs harden
+- ❌ Deep-scanning the solution category before the problem is framed → ✅ recon early is an existence check; the full scan targets the locked JTBD + segment
+- ❌ Proceeding past a no-wedge verdict on optimism → ✅ no-wedge is a human stop: proceed / pivot / kill, logged in DECISIONS.md
