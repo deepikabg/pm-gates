@@ -110,8 +110,8 @@ Artifact: [commit/branch]   Target: [platform / env]
 
 ## Handoff (→ qa-verify)
 
-- **Staging/preview:** clear to proceed autonomously; report the URL and trigger `qa-verify` for the full verification pass.
-- **Production / migration:** only after explicit human approval given in this gate. After a successful prod deploy, confirm rollback path is known, then trigger `qa-verify` for prod verification and the post-deploy monitoring window.
+- **Staging/preview:** clear to proceed autonomously; report the URL, log to state, and **signal loop-orchestrator — it owns routing** (per its rules, `qa-verify` runs the staging pass next).
+- **Production / migration:** only after explicit human approval given in this gate. After a successful prod deploy, confirm rollback path is known, log the approval, and **signal loop-orchestrator** (per its rules, `qa-verify` runs prod verification + the post-deploy monitoring window next).
 
 This gate's job ends when the deploy command succeeds. Verification of the *running product* belongs to `qa-verify` — the chain is complete only when its prod monitoring window closes clean. Ongoing findings feed back through the eval/feedback loop, not through re-running this gate.
 
