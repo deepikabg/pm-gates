@@ -11,6 +11,14 @@ pipeline:
 
 gates:
   brainstorm:            { status: pending, artifact: "", artifact_sha: "", passed_at: "" }
+  market-scan:
+    status: pending            # skipped(level-N) at L0-1; parity-check-only at L2
+    artifact: ""               # Market-Landscape.md (cited; also fills the Brief's Market & Differentiator)
+    artifact_sha: ""
+    passed_at: ""
+    valid_until: ""            # default +90d; past it the scan flips stale — refresh before reuse
+    recon_done: false          # the Gate-0 existence check ran (new-product builds)
+    wedge_verdict: ""          # clear-wedge | contested | no-wedge (no-wedge = human proceed/pivot/kill)
   eval-spec:             { status: pending, artifact: "", artifact_sha: "", passed_at: "" }
   prototype:
     status: pending            # skipped(headless) allowed — note why
