@@ -6,7 +6,7 @@
       "name": "pm-gates",
       "source": { "source": "path", "path": "./" },
       "description": "PM governance layer for autonomous build loops: gated pipeline from brainstorm through browser-verified deploy — cited market-scan with a wedge verdict, clickable-prototype triad approval, dependency-ordered story decomposition with a GitHub Projects view, an append-only decision ledger that keeps specs honest across pivots, scale-adaptive routing, pre-handoff first-run verification, stored test/eval evidence, and human hard stops at irreversible actions.",
-      "version": "1.4.0",
+      "version": "1.4.1",
       "license": "MIT",
       "strict": false,
       "skills": [
